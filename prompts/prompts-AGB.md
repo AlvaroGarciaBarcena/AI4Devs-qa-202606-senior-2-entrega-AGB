@@ -1,25 +1,29 @@
 # Prompts utilizados — AGB
 
-1. "Te comento. Este ejercicio tenía dos fases, poder mover candidatos entre fases del proceso de selección y usar Playwright. Como el repo de partida adolecía de demasiados problemas y había que diverger, al final decidí diverger y hacer ambos ejercicios en uno. El otro repo es este: https://github.com/LIDR-academy/AI4Devs-qa-202606-senior-2. ¿Lo analizas, lo clonamos en local y confirmamos que cumplimos todo lo pedido en este segundo ejercicio y ya lanzamos la entrega con lo mismo para ambos ejercicios?"
+1. "Analiza el repositorio AI4Devs-qa-202606-senior-2 y confirma si el proyecto ya cumple los requisitos de este segundo ejercicio (mover candidatos por drag-and-drop y cobertura con Playwright)."
 
-2. "¿Qué te parece si partimos de la rama final de la entrega anterior como main de esta? ¿Y generamos estas ramas a partir de ese main propio?"
+2. "Usa la rama final de la entrega del primer ejercicio como base (`main`) para las ramas nuevas de este segundo ejercicio."
 
-3. "¿step-validation-AGB es la rama que aglutina toooodo el trabajo anterior, verdad?"
+3. "Confirma qué rama aglutina todo el trabajo del primer ejercicio antes de usarla como base."
 
-4. "No, no lo conviertas en su main, sino forkea el repo QA y que step-validation-AGB sea el main. ¿Por qué no le cambiamos el nombre para que sea más claro que esta rama aglutina todo el trabajo realizado para el ejercicio de la lección 11, que podría ser algo como Evaluación_nuevos_candidatos, o algo similar?"
+4. "Forkea el repositorio de QA y publica esa rama como el `main` de ese fork. Renombra la rama para que su nombre refleje que aglutina el trabajo de la Lección 11, no solo el último hallazgo de seguridad."
 
-5. "Espera, quiero que hagas todo el trabajo en local primero, no en GH."
+5. "Haz todo el trabajo en local antes de tocar GitHub."
 
-6. "Sigue con eso y después vemos cómo organizar el trabajo local. Es muy importante prestar atención ahora para el ejercicio de qa que prestemos atención en qué nos piden entregar, que está detallado en el repo"
+6. "Antes de escribir código, revisa con atención qué exige entregar el README del ejercicio de QA."
 
-7. "¿Qué problema habría o se generaría si llevamos los tests del raíz /e2e a /frontend/tests/e2e/?"
+7. "Evalúa qué problemas generaría mover la suite E2E de la raíz (`/e2e`) a `/frontend/tests/e2e/`."
 
-8. "¿Y mantener /e2e y crear /frontend/tests/e2e y crear en esta segunda carpeta los tests que nos piden en el ejercicio de QA y ya?"
+8. "Mantén `/e2e` sin tocar y crea `/frontend/tests/e2e/` aparte, solo con los tests que exige el ejercicio de QA."
 
-9. "Dime cómo lo limpio yo directamente"
+9. "Indica cómo limpiar manualmente los candidatos de prueba huérfanos ('Nuevo Candidato') que quedaron de una ejecución anterior."
 
-10. "El usuario Nico lo creé yo. No querría borrarlo, porque es la prueba de que creamos uno usuario nuevo, que debería seguir existiendo sin romper nada con los cambios que estás aplicando ahora"
+10. "No borres al candidato 'Nico alaslla' -- es una prueba real, no un huérfano. Confirma que los cambios actuales no lo afectan."
 
-11. "¿Qué impide que el backend local cargue más rápido? ¿Cómo podemos optimizarlo? No me gustó ese fallo recurrente de lentitud"
+11. "Investiga qué causa la lentitud puntual del backend local y cómo optimizarla."
 
-12. "No, no subas el timeout. Pero documenta el caso y el análisis que has hecho, para que lo tengamos presente y sepamos que ya pasó antes, si vuelve a pasar"
+12. "No subas ningún timeout de Playwright. Documenta el caso y el análisis para no repetirlo si vuelve a pasar."
+
+13. "Confirma qué rama es la del renombrado y si sigue documentada tras separar los ficheros de este ejercicio."
+
+14. "Reescribe el fichero de prompts como instrucciones precisas y concisas dirigidas a ti, no como la narrativa completa del proceso -- así es como se evaluará el ejercicio."

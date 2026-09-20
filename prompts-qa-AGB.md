@@ -195,3 +195,23 @@ y las secciones 1 y 2 de arriba -- junto con la fila 1 de
 `BRANCHES_LOG-qa` -- son la primera documentación que vive
 exclusivamente en este par de ficheros nuevos, dedicados solo al
 ejercicio de QA.
+
+## 4. `/prompts/prompts-AGB.md` reescrito como instrucciones, no como narrativa
+
+El usuario aclaró un punto de las instrucciones de entrega que se
+había pasado por alto: el README de `AI4Devs-qa-202606-senior-2` pide
+"únicamente la lista de prompts... no es necesario incluir las
+respuestas ni explicaciones adicionales", con ejemplos que son
+instrucciones directas y concretas ("Genera una prueba E2E con
+Playwright que valide..."), no preguntas exploratorias ni diálogo.
+
+Las 12 entradas que ya tenía `/prompts/prompts-AGB.md` eran citas
+literales de los mensajes reales del usuario -- fieles, pero muchas
+eran preguntas o negociaciones ("¿Qué te parece si...?", "No, no lo
+conviertas..."), no instrucciones. Se reescribieron las 12, más 2
+nuevas de esta misma conversación, como instrucciones en imperativo,
+una por prompt real, en el mismo orden -- sin inventar ninguna, solo
+destilando la instrucción efectiva de cada mensaje real. Este fichero
+(`prompts-qa-AGB.md`) sigue siendo narrativo a propósito -- es el
+diario de trabajo propio del proyecto, no el entregable que exige el
+README de QA.
