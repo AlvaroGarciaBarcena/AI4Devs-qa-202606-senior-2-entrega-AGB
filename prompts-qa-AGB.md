@@ -215,3 +215,46 @@ destilando la instrucción efectiva de cada mensaje real. Este fichero
 (`prompts-qa-AGB.md`) sigue siendo narrativo a propósito -- es el
 diario de trabajo propio del proyecto, no el entregable que exige el
 README de QA.
+
+## 5. Clon local propio para el ejercicio de QA, separado de `AI4Devs-frontend-202606-senior-2`
+
+Hasta aquí, todo el trabajo de este ejercicio se había hecho dentro
+del mismo directorio de trabajo que el primer ejercicio
+(`AI4Devs-frontend-202606-senior-2`), usando un remoto extra (`qa-fork`)
+para publicar la rama en el fork del repo de QA. El usuario pidió ir
+un paso más allá: un **directorio local propio**, clonado directamente
+del fork de QA, para que la separación entre ambos ejercicios sea
+total (carpeta, remotos, procesos), no solo a nivel de ficheros dentro
+del mismo repo.
+
+**Cómo se hizo**:
+1. `qa-e2e-position-AGB` (con todo el trabajo hecho hasta ahora) se
+   publicó también con su propio nombre en el fork de QA -- sin tocar
+   su `main`, que ya apuntaba a la misma punta desde la sección 3 (el
+   commit compartido con la entrega del primer ejercicio).
+2. Se clonó ese fork en un directorio nuevo,
+   `~/IA/AI4Devs/AI4Devs-qa-202606-senior-2-entrega-AGB`, y se hizo
+   `checkout` de esa misma rama.
+3. Se añadió `upstream` -> `LIDR-academy/AI4Devs-qa-202606-senior-2`
+   (el repo real), para el PR final.
+4. Verificado que el clon es fiel antes de seguir: `diff -rq` contra el
+   directorio original (excluyendo `.git`, `node_modules` y artefactos
+   de build) no mostró ninguna diferencia de código fuente -- solo
+   ficheros ya ignorados por git (`.env`, `dist/`, `test-results/`,
+   `SECRETS.md`...), que se copiaron a mano porque son configuración
+   local de este mismo equipo, no algo que viva en el repo.
+5. `npx tsc --noEmit` y los tests unitarios (backend: 93/93, frontend:
+   119/119) pasan igual desde este directorio nuevo.
+6. Se pararon los procesos de backend y frontend que corrían desde
+   `AI4Devs-frontend-202606-senior-2` y se arrancaron de nuevo desde
+   aquí -- de ahora en adelante la app corre siempre desde este clon,
+   no desde el otro directorio.
+7. `npx playwright test` (los dos escenarios de `position.spec.ts`)
+   ejecutado contra este backend y frontend nuevos: 2/2, igual que
+   antes.
+
+La rama `qa-e2e-position-AGB` sigue existiendo también en
+`AI4Devs-frontend-202606-senior-2` (no se ha borrado, es historia
+local sin publicar en ningún otro sitio) -- pero deja de ser donde se
+trabaja: de aquí en adelante, todo lo de este segundo ejercicio pasa
+por este directorio.
