@@ -15,3 +15,11 @@
 7. "¿Qué problema habría o se generaría si llevamos los tests del raíz /e2e a /frontend/tests/e2e/?"
 
 8. "¿Y mantener /e2e y crear /frontend/tests/e2e y crear en esta segunda carpeta los tests que nos piden en el ejercicio de QA y ya?"
+
+9. "Dime cómo lo limpio yo directamente"
+
+10. "El usuario Nico lo creé yo. No querría borrarlo, porque es la prueba de que creamos uno usuario nuevo, que debería seguir existiendo sin romper nada con los cambios que estás aplicando ahora"
+
+11. "¿Qué impide que el backend local cargue más rápido? ¿Cómo podemos optimizarlo? No me gustó ese fallo recurrente de lentitud"
+
+12. "No, no subas el timeout. Pero documenta el caso y el análisis que has hecho, para que lo tengamos presente y sepamos que ya pasó antes, si vuelve a pasar"

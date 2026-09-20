@@ -6702,3 +6702,75 @@ intentó limpiarlos con un script Prisma aparte
 clasificador de permisos del entorno bloqueó su ejecución (mutación
 directa de base de datos fuera de un test). Queda pendiente, marcado
 para el usuario en vez de forzarlo.
+
+## 3.65 Limpieza de los huérfanos, "Nico alaslla" y la lentitud puntual de `hiring-pipeline.feature`: investigado, sin cuello de botella real
+
+Continuación directa de la sección 3.64. El usuario pidió instrucciones
+para limpiar él mismo los candidatos huérfanos "Nuevo Candidato" (el
+mismo script de la sección anterior, esta vez ejecutado fuera del
+sandbox -- sin el clasificador de permisos de por medio, sí funcionó).
+Al reejecutar `hiring-pipeline.feature` para confirmar la limpieza, el
+propio escenario "Alta de candidato reflejada en el tablero" volvió a
+fallar y dejó **otro** huérfano (id 409) -- limpiado también, con el
+mismo script.
+
+El volcado de accesibilidad que capturó Playwright al fallar mostraba
+al candidato ya presente en la columna correcta en el momento del
+fallo: la aserción `toBeVisible()` expiró (5s) antes de que la página
+terminara de renderizar, no porque el dato estuviera mal. Eso, junto
+con que `Carlos García` seguía confirmado por API en su fase correcta
+mientras tanto, señalaba a lentitud/timing, no a un fallo de lógica --
+ni de esta rama (los `data-testid` son aditivos) ni del propio
+`hiring-pipeline.feature` (no se tocó).
+
+El usuario aclaró además que **"Nico alaslla" no es un huérfano**: es
+un candidato que creó él mismo a propósito, como prueba de que el alta
+de un candidato nuevo funciona, y debía seguir existiendo. El filtro
+del script de limpieza (`firstName: 'Nuevo', lastName: 'Candidato'`)
+nunca lo tocó -- confirmado con la misma llamada real a la API que ya
+se venía usando en toda esta sección, no de memoria.
+
+**Investigación de la lentitud, a petición del usuario ("no me gustó
+ese fallo recurrente de lentitud")** -- se comprobó cada sospechoso
+habitual con datos reales, no solo leyendo el código:
+
+- Tiempos reales de los tres endpoints que carga el tablero
+  (`/position`, `/position/:id/candidates`, `/position/:id/
+  interviewflow`), medidos con `curl -w "%{time_total}"` tres veces
+  seguidas: **2-4 milisegundos** cada uno. Sin margen para explicar un
+  timeout de 5 segundos.
+- Login (`authService.ts`): usa `bcrypt.compare` (asíncrono), no
+  `compareSync` -- no bloquea el event loop de Node.
+- `getCandidatesByPositionService` (`positionService.ts`): un único
+  `findMany` con `include` (candidato, entrevistas, fase); la media y
+  el conteo de entrevistas sin puntuar se calculan en memoria después
+  -- no hay patrón N+1.
+- El rate limiter (`express-rate-limit`) usa un mapa en memoria, O(1)
+  por petición.
+- Modo dev del backend (`ts-node-dev --transpile-only`): sin chequeo de
+  tipos en caliente, no añade lentitud extra sobre el modo compilado.
+- Se revisó también si el propio `ts-node-dev --respawn` podía estar
+  reiniciando el proceso al crear/borrar `backend/cleanup-e2e-
+  orphans.ts` (dentro de `backend/`, el propio directorio que vigila) --
+  descartado revisando el log real del proceso (`[INFO] ts-node-dev`
+  arrancó una vez, sin ningún "Restarting" posterior).
+- Único hallazgo real, inofensivo: en desarrollo, `React.StrictMode`
+  duplica cada fetch al montar un componente (se ve literalmente cada
+  `GET` repetido dos veces en milisegundos en el log del backend) --
+  comportamiento deliberado de React para detectar efectos secundarios
+  mal escritos, no existe en producción, y con 2-4ms por llamada no
+  acerca nada a un timeout de 5s.
+
+**Conclusión, documentada para no repetir esta misma investigación si
+vuelve a pasar**: no hay ningún cuello de botella real identificado en
+backend, base de datos ni frontend -- lo más probable es un pico
+puntual del propio entorno (arranque de Chromium, una pausa de
+garbage collection, contención del sandbox en el que corre esta
+sesión), no un problema de la aplicación. A petición explícita del
+usuario, **no se sube el timeout de Playwright** -- ni aquí ni en
+ningún otro sitio -- para no enmascarar un fallo real futuro. Si
+`hiring-pipeline.feature` (u otro escenario) vuelve a fallar así --
+dato correcto en el volcado de accesibilidad, aserción de visibilidad
+expirada -- ya se sabe que no hace falta repetir esta ronda completa de
+comprobaciones: revisar primero si fue un pico puntual (reejecutar sin
+cambiar nada) antes de sospechar de una regresión real.
