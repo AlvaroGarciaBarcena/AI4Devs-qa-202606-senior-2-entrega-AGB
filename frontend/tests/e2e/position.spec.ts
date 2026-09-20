@@ -13,18 +13,29 @@ const SEEDED_EMPLOYEE = {
 };
 
 // Sembrada por backend/prisma/seed.ts: "Senior Full-Stack Engineer" tiene a
-// Carlos García en "Initial Screening" y a John Doe en "Technical
-// Interview" -- mismo fixture que ya usa
-// e2e/steps/hiring-pipeline.steps.ts en la raíz para el escenario
-// equivalente de carga del tablero (Playwright-BDD, no cuenta como
-// cobertura del drag-and-drop que pide este ejercicio). No se usa a Jane
-// Smith como tercer candidato de referencia: a diferencia de Carlos y John,
-// su fase ya se movió por trabajo manual anterior en esta misma base de
-// datos de desarrollo compartida, y ató la prueba a un dato que ya no es
-// estable.
+// Carlos García en "Initial Screening" -- único candidato cuya fase se
+// mantiene activamente (esta misma suite lo devuelve ahí en su propio
+// `finally`). El resto de candidatos de esta posición (John Doe, Jane
+// Smith...) se han movido más de una vez por trabajo manual en esta misma
+// base de datos de desarrollo compartida -- primero fue Jane Smith, luego
+// también John Doe. En vez de fijar un segundo nombre a una fase concreta
+// otra vez, el primer escenario comprueba contra la respuesta real de la
+// API qué candidato está en qué fase, en vez de asumirlo.
 const POSITION_TITLE = 'Senior Full-Stack Engineer';
 
 type InterviewStep = { id: number; name: string; orderIndex: number };
+type Candidate = { fullName: string; currentInterviewStep: string };
+
+// Debe coincidir exactamente con `toTestId` de
+// frontend/src/components/PositionProcess.tsx -- ahí es donde se genera
+// el data-testid real de cada columna a partir del nombre de la fase.
+const toTestId = (value: string) =>
+    value
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
 
 const login = async (page: Page) => {
     await page.goto('/login');
@@ -34,18 +45,23 @@ const login = async (page: Page) => {
     await page.waitForURL('**/');
 };
 
-// Devuelve las fases reales del proceso, capturadas de la misma respuesta
-// que ya carga la página -- así la prueba no depende de un id de fase fijo
-// en el seed, solo de su nombre.
-const openPositionBoard = async (page: Page): Promise<InterviewStep[]> => {
+// Devuelve las fases y los candidatos reales del proceso, capturados de
+// las mismas respuestas que ya carga la página -- así la prueba no
+// depende de un id de fase fijo en el seed, ni de qué candidato concreto
+// esté en qué fase (ver el comentario de POSITION_TITLE más arriba).
+const openPositionBoard = async (page: Page): Promise<{ steps: InterviewStep[]; candidates: Candidate[] }> => {
     await page.goto('/positions');
     const interviewFlowResponse = page.waitForResponse(
         (res) => res.url().includes('/interviewflow') && res.request().method() === 'GET',
     );
+    const candidatesResponse = page.waitForResponse(
+        (res) => res.url().includes('/candidates') && res.request().method() === 'GET',
+    );
     await page.locator('.card', { hasText: POSITION_TITLE }).getByRole('button', { name: 'Ver proceso' }).click();
     await expect(page).toHaveURL(/\/positions\/\d+$/);
-    const body = await (await interviewFlowResponse).json();
-    return body.interviewFlow.interviewFlow.interviewSteps as InterviewStep[];
+    const flowBody = await (await interviewFlowResponse).json();
+    const candidates = (await (await candidatesResponse).json()) as Candidate[];
+    return { steps: flowBody.interviewFlow.interviewFlow.interviewSteps as InterviewStep[], candidates };
 };
 
 const waitForCandidateStagePut = (page: Page) =>
@@ -58,22 +74,35 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('la página de position carga el título, las columnas de fase y cada candidato en su columna correcta', async ({ page }) => {
-    await openPositionBoard(page);
+    const { steps, candidates } = await openPositionBoard(page);
 
     await expect(page.getByTestId('position-title')).toContainText(POSITION_TITLE);
 
-    const initialScreening = page.getByTestId('phase-column-initial-screening');
-    const technicalInterview = page.getByTestId('phase-column-technical-interview');
-    await expect(initialScreening).toBeVisible();
-    await expect(technicalInterview).toBeVisible();
+    // Todas las columnas de fase están presentes, tengan o no candidatos
+    // ahora mismo.
+    expect(steps.length).toBeGreaterThan(0);
+    for (const step of steps) {
+        await expect(page.getByTestId(`phase-column-${toTestId(step.name)}`)).toBeVisible();
+    }
 
-    await expect(initialScreening.getByText('Carlos García')).toBeVisible();
-    await expect(technicalInterview.getByText('John Doe')).toBeVisible();
-    await expect(initialScreening.getByText('John Doe')).toHaveCount(0);
+    // Cada candidato aparece en la columna que dice la API que le
+    // corresponde -- comprobado contra la respuesta real, no contra un
+    // nombre y una fase fijados a mano (ver el comentario de arriba).
+    expect(candidates.length).toBeGreaterThan(0);
+    for (const candidate of candidates) {
+        const column = page.getByTestId(`phase-column-${toTestId(candidate.currentInterviewStep)}`);
+        await expect(column.getByText(candidate.fullName)).toBeVisible();
+    }
+
+    // Carlos García es el único candidato cuya fase mantiene activamente
+    // esta misma suite (ver el `finally` del segundo escenario) -- se
+    // comprueba explícitamente como mínimo estable, además del bucle
+    // genérico de arriba.
+    await expect(page.getByTestId('phase-column-initial-screening').getByText('Carlos García')).toBeVisible();
 });
 
 test('arrastrar la ficha de un candidato a otra fase la mueve visualmente y dispara el PUT al backend con la fase nueva', async ({ page }) => {
-    const steps = await openPositionBoard(page);
+    const { steps } = await openPositionBoard(page);
     const technicalStep = steps.find((s) => s.name === 'Technical Interview');
     if (!technicalStep) {
         throw new Error('El seed no tiene la fase "Technical Interview" -- backend/prisma/seed.ts pudo cambiar.');

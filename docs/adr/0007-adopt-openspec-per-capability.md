@@ -18,4 +18,4 @@ Adoptar [OpenSpec](https://github.com/Fission-AI/OpenSpec), con una spec por **c
 - 11 capacidades, ~41 requisitos, 56 escenarios GIVEN/WHEN/THEN completos, cada uno trazado a su rama/commit real — verificable con `openspec validate --specs --strict`.
 - Cuando una rama posterior corrige algo que una rama anterior documentó como ya resuelto (p. ej. la validación de contenido subido, ver `prompts-AGB.md` §3.27.1), la línea de trazabilidad se actualiza para apuntar a quien lo arregló de verdad, no a quien solo dejó constancia del hallazgo — la trazabilidad manda sobre la cronología.
 
-Más contexto: [`prompts-AGB.md` §3.24](../../prompts-AGB.md#324-adopción-de-openspec-openspec-adoption-agb).
+Más contexto: [`prompts-AGB.md` §3.24](../../entrega-frontend-AGB/prompts-AGB.md#324-adopción-de-openspec-openspec-adoption-agb).

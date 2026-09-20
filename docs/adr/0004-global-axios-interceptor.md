@@ -17,4 +17,4 @@ Registrar los interceptores (`request` para añadir el token, `response` para re
 - Efecto secundario global al importar `apiClient.js` — cualquier código que use axios en este proyecto queda afectado por los interceptores, para bien (no hay que acordarse de nada) y para mal (no es obvio solo con leer un `service.js` cualquiera que sus peticiones llevan already un interceptor por delante, hay que saber que existe `apiClient.js`).
 - Un `401` fuerza `window.location.assign('/login')` (recarga completa), no una navegación de React Router — deliberado: el interceptor vive fuera del árbol de componentes, sin acceso limpio al router, y una recarga completa garantiza que no quede ningún estado de la sesión anterior a medias en memoria.
 
-Más contexto: [`prompts-AGB.md` §3.19.8](../../prompts-AGB.md#3198-frontend-por-qué-un-interceptor-global-de-axios-no-una-instancia-propia).
+Más contexto: [`prompts-AGB.md` §3.19.8](../../entrega-frontend-AGB/prompts-AGB.md#3198-frontend-por-qué-un-interceptor-global-de-axios-no-una-instancia-propia).

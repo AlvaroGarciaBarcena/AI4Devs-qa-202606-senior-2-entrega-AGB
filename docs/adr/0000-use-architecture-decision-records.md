@@ -4,7 +4,7 @@
 Aceptado
 
 ## Contexto
-Este proyecto lleva desde el principio un diario de desarrollo muy completo, [`prompts-AGB.md`](../../prompts-AGB.md): cada rama tiene su sección, con el prompt que la originó, el proceso de investigación y los hallazgos reales verificados con PoC. Es excelente como registro histórico, pero tiene un coste: para saber *qué se decidió* sobre, por ejemplo, la autenticación, hay que leer varias páginas de proceso mezcladas con el resultado. No hay un sitio para consultar solo la decisión final, corta, sin la narrativa completa alrededor.
+Este proyecto lleva desde el principio un diario de desarrollo muy completo, [`prompts-AGB.md`](../../entrega-frontend-AGB/prompts-AGB.md): cada rama tiene su sección, con el prompt que la originó, el proceso de investigación y los hallazgos reales verificados con PoC. Es excelente como registro histórico, pero tiene un coste: para saber *qué se decidió* sobre, por ejemplo, la autenticación, hay que leer varias páginas de proceso mezcladas con el resultado. No hay un sitio para consultar solo la decisión final, corta, sin la narrativa completa alrededor.
 
 ## Decisión
 Añadir `docs/adr/`, con un ADR corto (formato Nygard) por cada decisión de arquitectura real tomada en el proyecto — no por cada rama ni por cada bug corregido, solo por las decisiones donde había más de un camino razonable. Cada ADR enlaza a la sección correspondiente de `prompts-AGB.md` para quien quiera el proceso completo.

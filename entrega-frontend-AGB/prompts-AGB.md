@@ -2168,7 +2168,7 @@ nativo vaya a leer.
 ### 3.16.2 El arreglo: ocultar el input, controlarlo con un botón propio
 
 Patrón estándar (usado por Bootstrap y la mayoría de librerías de UI)
-en [`FileUploader.jsx`](frontend/src/components/FileUploader.jsx):
+en [`FileUploader.jsx`](../frontend/src/components/FileUploader.jsx):
 
 1. El `<input type="file">` se mantiene en el DOM y en el orden de
    tabulación (accesible por teclado y lectores de pantalla), pero se
@@ -2186,7 +2186,7 @@ en [`FileUploader.jsx`](frontend/src/components/FileUploader.jsx):
    cualquier otro texto de la aplicación.
 
 Claves nuevas en
-[`es.json`](frontend/src/i18n/locales/es.json)/[`en.json`](frontend/src/i18n/locales/en.json)
+[`es.json`](../frontend/src/i18n/locales/es.json)/[`en.json`](../frontend/src/i18n/locales/en.json)
 (dentro de `fileUploader`): `browse` ("Seleccionar archivo" / "Browse…")
 y `noFileSelected` ("Ningún archivo seleccionado" / "No file selected").
 Las claves `ariaLabel`, `selectedFile`, `upload` y `success` ya existían.
@@ -2358,7 +2358,7 @@ se cambia de librería de subida de ficheros, o esa versión de `busboy`
 deja de sanear (no está documentado como parte de su contrato público),
 el `path.join` de `multer` volvería a ser alcanzable con un
 `file.originalname` malicioso. Se ha añadido `path.basename()` explícito
-en [`fileUploadService.ts`](backend/src/application/services/fileUploadService.ts)
+en [`fileUploadService.ts`](../backend/src/application/services/fileUploadService.ts)
 para que la protección no dependa de un comportamiento no documentado de
 una dependencia transitiva:
 
@@ -2423,7 +2423,7 @@ dependencias.
 moderada (superficie de ataque general, agravada por el hallazgo
 3.17.2: no hay autenticación que frene un abuso automatizado).**
 
-Añadido en [`index.ts`](backend/src/index.ts):
+Añadido en [`index.ts`](../backend/src/index.ts):
 
 ```ts
 app.use(helmet());
@@ -2451,7 +2451,7 @@ sin límite de longitud; `express.json()` limita el *tamaño en bytes* del
 body (100kb por defecto) pero no el número de elementos de un array
 dentro de él, y no había ningún otro punto del sistema que lo acotara.
 Añadido un límite de 20 entradas en
-[`validator.ts`](backend/src/application/validator.ts), con un código de
+[`validator.ts`](../backend/src/application/validator.ts), con un código de
 error nuevo (`tooManyEntries`) en vez de reutilizar `tooLong` (que dice
 "caracteres", no "entradas" — habría sido un mensaje traducido pero
 incorrecto):
@@ -2464,13 +2464,13 @@ if (data.educations.length > MAX_ARRAY_ENTRIES) {
 ```
 
 Traducido en ambos idiomas
-([`es.json`](frontend/src/i18n/locales/es.json)/[`en.json`](frontend/src/i18n/locales/en.json)):
+([`es.json`](../frontend/src/i18n/locales/es.json)/[`en.json`](../frontend/src/i18n/locales/en.json)):
 *"Educación no puede tener más de 20 entradas."* / *"Education cannot
 have more than 20 entries."* — reutilizando la etiqueta de sección ya
 traducida (`validation.sections.educations`) en vez de duplicarla, dado
 que este `issue.field` llega sin índice (`'educations'`, no
 `'educations[3]...'`), un caso que
-[`validationMessages.js`](frontend/src/i18n/validationMessages.js) no
+[`validationMessages.js`](../frontend/src/i18n/validationMessages.js) no
 contemplaba todavía.
 
 ### 3.17.4 Descartado tras comprobarlo: inyección SQL
@@ -2597,9 +2597,9 @@ con una versión "7", pero lo atribuía a la librería equivocada:
 Antes de instalar nada se revisó qué API de `react-router-dom` usa
 realmente la aplicación (`grep -rln "react-router" src`): solo 4
 ficheros, y solo estas importaciones —
-[`App.jsx`](frontend/src/App.jsx): `BrowserRouter`, `Routes`, `Route`;
-[`RecruiterDashboard.jsx`](frontend/src/components/RecruiterDashboard.jsx)/[`Positions.tsx`](frontend/src/components/Positions.tsx):
-`Link`; [`PositionProcess.tsx`](frontend/src/components/PositionProcess.tsx):
+[`App.jsx`](../frontend/src/App.jsx): `BrowserRouter`, `Routes`, `Route`;
+[`RecruiterDashboard.jsx`](../frontend/src/components/RecruiterDashboard.jsx)/[`Positions.tsx`](../frontend/src/components/Positions.tsx):
+`Link`; [`PositionProcess.tsx`](../frontend/src/components/PositionProcess.tsx):
 `Link`, `useParams`. Es el modo "declarativo" más simple de la librería
 (sin *data routers*, sin `loader`/`action`/`fetcher`, sin rutas con
 comodín `*`) — exactamente el subconjunto de la API que v7 mantiene
@@ -2851,7 +2851,7 @@ automático de Vitest no sabe qué debería devolver `create()`), y los 6
 tests de ese fichero se habrían roto sin que el cambio tuviera nada que
 ver con lo que esos tests verifican.
 
-En su lugar, [`apiClient.js`](frontend/src/services/apiClient.js) registra
+En su lugar, [`apiClient.js`](../frontend/src/services/apiClient.js) registra
 dos interceptores **sobre la instancia por defecto** de axios
 (`axios.interceptors.request.use(...)`/`response.use(...)`), importado
 una sola vez como efecto secundario al arrancar la app (`import
@@ -2908,7 +2908,7 @@ incluidas) gana la cabecera `Authorization` automáticamente.
   ruta pública; las cuatro rutas existentes (`/`, `/add-candidate`,
   `/positions`, `/positions/:id`) envueltas en `<RequireAuth>`.
 - **i18n**: claves nuevas `login.*`/`userMenu.logout` en
-  [`es.json`](frontend/src/i18n/locales/es.json)/[`en.json`](frontend/src/i18n/locales/en.json).
+  [`es.json`](../frontend/src/i18n/locales/es.json)/[`en.json`](../frontend/src/i18n/locales/en.json).
 
 ### 3.19.10 Hallazgo al escribir los tests: auto-mockear un módulo también sustituye sus clases de error
 
@@ -3051,7 +3051,7 @@ cómo afecta a la experiencia de usuario el resultado final?"*
 
 ### 3.20.1 El cambio en sí
 
-En [`App.jsx`](frontend/src/App.jsx), las 4 rutas protegidas pasan de
+En [`App.jsx`](../frontend/src/App.jsx), las 4 rutas protegidas pasan de
 `import` estático a `React.lazy(() => import(...))`, envueltas en un
 único `<Suspense>` alrededor de `<Routes>`:
 
@@ -3241,7 +3241,7 @@ no reflejaba la corrección, aunque el dato sí se hubiera corregido por
 debajo.
 
 **Arreglo**, en
-[`AddCandidateForm.jsx`](frontend/src/components/AddCandidateForm.jsx):
+[`AddCandidateForm.jsx`](../frontend/src/components/AddCandidateForm.jsx):
 una función `clearFieldIssue(field)` que quita del array `issues`
 cualquier entrada de ese campo, invocada desde un `handleFieldChange`
 nuevo (que sustituye los 5 `onChange` en línea) y también desde
@@ -3268,7 +3268,7 @@ explicar la regla real (ni la longitud ni el prefijo esperado).
 **Arreglo**: nuevo código específico `invalidPhoneFormat` (añadido a la
 unión de tipos de `ValidationIssue`), usado solo por `validatePhone`, con
 su propio mensaje en
-[`es.json`](frontend/src/i18n/locales/es.json)/[`en.json`](frontend/src/i18n/locales/en.json):
+[`es.json`](../frontend/src/i18n/locales/es.json)/[`en.json`](../frontend/src/i18n/locales/en.json):
 *"El teléfono debe tener 9 dígitos y empezar por 6, 7 o 9."* / *"The
 phone number must have 9 digits and start with 6, 7, or 9."* — mismo
 patrón que ya usa `invalidCharacters` (código específico con un mensaje
@@ -3352,7 +3352,7 @@ volver a renderizar.
 ### 3.22.2 Arreglo
 
 En
-[`AddCandidateForm.jsx`](frontend/src/components/AddCandidateForm.jsx):
+[`AddCandidateForm.jsx`](../frontend/src/components/AddCandidateForm.jsx):
 
 1. Los 5 campos ganan `value={candidate.X}` — pasan a ser controlados
    de verdad, no solo en apariencia.
@@ -3480,7 +3480,7 @@ crear vacantes queda para una rama futura, deliberada.
 
 ### 3.23.4 Frontend: desplegable real, no texto libre
 
-En [`AddCandidateForm.jsx`](frontend/src/components/AddCandidateForm.jsx):
+En [`AddCandidateForm.jsx`](../frontend/src/components/AddCandidateForm.jsx):
 `positionId` se añade a `EMPTY_CANDIDATE`; un `useEffect` carga las
 posiciones reales (`getPositions()`, el mismo servicio que ya usaba
 `Positions.tsx` — sin duplicar nada) al montar el componente; un

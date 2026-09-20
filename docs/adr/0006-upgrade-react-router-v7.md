@@ -17,4 +17,4 @@ Actualizar `react-router-dom` de v6 a v7, tras confirmar que solo 4 ficheros del
 - Sin cambios de comportamiento observables en ese momento (verificado con la suite de tests existente) — la actualización en sí fue de bajo riesgo real, aunque de alto riesgo *percibido* por ser un salto de versión mayor.
 - Dejó el camino libre para `createBrowserRouter`/`RouterProvider` (ADR-0010) más adelante en la sesión, que sí depende de v7.
 
-Más contexto: [`prompts-AGB.md` §3.18](../../prompts-AGB.md#318-migración-de-react-router-dom-v6-v7-react-router-v7-agb).
+Más contexto: [`prompts-AGB.md` §3.18](../../entrega-frontend-AGB/prompts-AGB.md#318-migración-de-react-router-dom-v6-v7-react-router-v7-agb).

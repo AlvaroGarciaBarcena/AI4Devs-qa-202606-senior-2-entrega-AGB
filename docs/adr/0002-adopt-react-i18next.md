@@ -18,4 +18,4 @@ Sustituir el sistema casero por [`react-i18next`](https://react.i18next.com/), l
 - `useTranslation()` en un componente suscribe automáticamente a los cambios de idioma — un cambio de idioma re-renderiza todo lo que usa `t()`, incluidos mensajes de error ya visibles en pantalla, sin volver a enviar ninguna petición.
 - Nueva dependencia de terceros (`i18next-browser-languagedetector` para la detección automática) en vez de la detección manual que había antes — mismo comportamiento observable, pero mantenido fuera del proyecto.
 
-Más contexto: [`prompts-AGB.md` §3.13](../../prompts-AGB.md#313-migración-a-react-i18next-cómo-se-hace-bien).
+Más contexto: [`prompts-AGB.md` §3.13](../../entrega-frontend-AGB/prompts-AGB.md#313-migración-a-react-i18next-cómo-se-hace-bien).

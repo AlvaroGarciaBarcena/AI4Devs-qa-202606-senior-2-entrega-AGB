@@ -287,7 +287,7 @@ Capturada también la evidencia de ejecución que exige el checklist de
 entrega: salida completa de `npx playwright test` (los dos escenarios
 de `position.spec.ts`, 2/2) contra el backend y frontend reales
 arrancados desde este mismo directorio, guardada en
-[`/prompts/evidencia-ejecucion-AGB.txt`](./prompts/evidencia-ejecucion-AGB.txt).
+[`/prompts/evidencia-ejecucion-AGB.txt`](../prompts/evidencia-ejecucion-AGB.txt).
 
 ## 7. Qué parte de `/e2e` es realmente "de frontend" (sin moverla)
 
@@ -333,4 +333,81 @@ y otra justificando las dos configuraciones de Playwright) se redactó
 primero en un fichero temporal fuera del repo. El usuario pidió
 guardarla también aquí, para no depender de que sobreviva el
 directorio temporal de la sesión hasta el momento de abrir el PR de
-verdad: [`/prompts/PR-DESCRIPTION-QA.md`](./prompts/PR-DESCRIPTION-QA.md).
+verdad: [`/prompts/PR-DESCRIPTION-QA.md`](./PR-DESCRIPTION-QA.md).
+
+## 9. Carpetas propias por entrega (`entrega-frontend-AGB/`, `entrega-qa-AGB/`) y un segundo caso de deriva de datos
+
+Al revisar la descripción del PR, el usuario señaló un problema real de
+claridad: aunque el aviso al principio de `README.md` explicara el
+punto de partida, mezclar en la misma raíz los ficheros del primer
+ejercicio (`prompts-AGB.md`, `BRANCHES_LOG`...) con los de este
+segundo, sin más separación que un aviso de texto, seguía siendo
+confuso para alguien que no hubiera seguido el hilo -- "que no seamos
+nosotros dos". Se evaluaron y descartaron dos alternativas antes de
+llegar a esta:
+
+- Renombrar `/prompts/` a `/prompts-qa/`: descartado -- esa ruta
+  exacta la exige el propio README de `AI4Devs-qa-202606-senior-2`
+  ("Registra todos los prompts utilizados en:
+  `/prompts/prompts-[tus-iniciales].md`"), no es un nombre nuestro.
+- Un aviso de texto al principio del README, sin mover nada: era la
+  propuesta inicial de esta misma sección de trabajo, pero no resolvía
+  el problema de fondo -- los ficheros seguían físicamente mezclados.
+
+**Solución final**: dos carpetas dedicadas, mismo criterio en ambos
+lados --
+
+- `entrega-frontend-AGB/`: los 7 ficheros que son pura narrativa del
+  primer ejercicio (`prompts-AGB.md` y sus tres satélites,
+  `BRANCHES_LOG`, `JUSTIFICACION-ENTREGA.md`, `PROMPTS_POR_PR.md`).
+  `README-ES.md`/`README-EN.md` (instrucciones para levantar el
+  entorno, las necesita también quien corra las pruebas de QA) y
+  `docs/adr/`/`openspec/specs/` (documentación técnica de la propia
+  app) se quedan donde estaban -- no son "ruido" del otro ejercicio.
+- `entrega-qa-AGB/`: `prompts-qa-AGB.md` (este fichero) y
+  `BRANCHES_LOG-qa`, más `PR-DESCRIPTION-QA.md` -- ninguno de los tres
+  exigido por ninguna ruta concreta del checklist. `/prompts/` se deja
+  con exactamente lo que sí exige o menciona el checklist:
+  `prompts-AGB.md` (ruta obligatoria) y `evidencia-ejecucion-AGB.txt`
+  (el ítem "evidencia de ejecución exitosa").
+
+**Verificación real de los enlaces, no solo revisión visual**: un
+script (`python3`, sin dependencias) recorrió todos los `.md`/`.txt`
+del repo buscando enlaces markdown relativos y comprobando que
+cada ruta resuelve a un fichero real. Primera pasada: 15 rotos --
+13 rutas a código fuente dentro de `prompts-AGB.md` (necesitaban un
+`../` más al bajar un nivel), 4 líneas en los README apuntando al
+grupo movido, y **11 ficheros de `docs/adr/`** enlazando a
+`../../prompts-AGB.md`, que el primer repaso manual (solo miró enlaces
+dentro y hacia el propio grupo de 7) no había cubierto. Arreglados los
+15, segunda pasada del script: cero rotos. De paso se corrigió también
+un enlace que ya estaba mal desde que se creó `PR-DESCRIPTION-QA.md`
+en la sección 8 (apuntaba a `prompts/prompts/evidencia-ejecucion-AGB.txt`,
+doblemente anidado).
+
+Se añadió además un aviso corto al principio de `README.md` (lo
+primero que ve cualquiera que abra el repo) señalando las dos carpetas
+y su propósito.
+
+**Verificado que el reorden no rompía nada funcional** -- no tocaba
+código de la app, pero se comprobó igual: al reejecutar
+`position.spec.ts` después de mover los ficheros, falló un escenario
+que no tenía nada que ver con el movimiento. La causa real: un
+**segundo caso de deriva de datos** en la base de desarrollo
+compartida (ver sección 2) -- John Doe, que el primer escenario
+asumía en "Technical Interview" como segunda referencia junto a Carlos
+García, había pasado a "Manager Interview" por trabajo manual anterior
+en esta misma sesión (Jane Smith ya había tenido el mismo problema al
+escribir la sección 1 original).
+
+En vez de fijar un tercer nombre a una fase concreta (mismo error
+repetido una vez más), se reescribió el escenario para que compruebe
+contra la respuesta real de `GET /position/:id/candidates` qué
+candidato está en qué fase, en vez de asumirlo -- inmune a que la base
+de datos compartida siga cambiando. Carlos García se mantiene como
+comprobación explícita adicional (es el único cuya fase mantiene
+activamente esta misma suite, en el `finally` del segundo escenario).
+Verificado tras el cambio: `tsc` limpio, 119/119 tests unitarios sin
+cambios, y `position.spec.ts` ejecutado dos veces seguidas (2/2 ambas
+veces) -- evidencia de ejecución regenerada en
+`/prompts/evidencia-ejecucion-AGB.txt`.

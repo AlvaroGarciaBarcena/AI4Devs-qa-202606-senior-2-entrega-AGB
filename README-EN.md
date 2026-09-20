@@ -222,7 +222,7 @@ The E2E suite drives a real browser against your running app and covers authenti
 │   ├── features/               *.feature files — one scenario = one real user story
 │   └── steps/                   Step implementations
 ├── openspec/                 Capability specs describing what the system does today, with traceability to the branch/commit that implemented each one
-├── prompts-AGB.md            Development journal: every branch, prompt and finding from building this project
+├── entrega-frontend-AGB/     Development journal for the first exercise (Lesson 11): every branch, prompt and finding
 └── docker-compose.yml        PostgreSQL container definition
 ```
 
@@ -289,8 +289,8 @@ pkill -f "node_modules/.bin/vite"
 - [`backend/ManifestoBuenasPracticas.md`](./backend/ManifestoBuenasPracticas.md) — backend coding conventions.
 - [`openspec/specs/`](./openspec/specs/) — what the system does today, capability by capability, each requirement traced to the branch and commit that implemented it.
 - [`docs/adr/`](./docs/adr/) — this project's real architecture decisions, one per file, short Nygard format: what was decided, why, and which alternatives were rejected.
-- [`BRANCHES_LOG`](./BRANCHES_LOG) — index of this project's 36 branches, each linked directly to the `prompts-AGB.md` section that documents it.
-- [`prompts-AGB.md`](./prompts-AGB.md) — the full development history of this project: every branch, the reasoning behind it, and real bugs found and fixed along the way.
+- [`entrega-frontend-AGB/BRANCHES_LOG`](./entrega-frontend-AGB/BRANCHES_LOG) — index of the first exercise's (Lesson 11) 36 branches, each linked directly to the `prompts-AGB.md` section that documents it.
+- [`entrega-frontend-AGB/prompts-AGB.md`](./entrega-frontend-AGB/prompts-AGB.md) — the full development history of that first exercise: every branch, the reasoning behind it, and real bugs found and fixed along the way. (The second exercise, QA/Playwright, has its own journal under [`entrega-qa-AGB/`](./entrega-qa-AGB/).)
 
 ## Troubleshooting
 

@@ -19,4 +19,4 @@ Migrar el frontend completo a [Vite](https://vite.dev): servidor de desarrollo, 
 - El puerto del frontend queda fijado a `3000` en `vite.config.ts` porque el backend tiene el CORS hardcodeado a ese origen — un acoplamiento a tener en cuenta si se cambia el puerto en el futuro.
 - Cualquier variable de entorno del lado del cliente pasa de `REACT_APP_*` a `VITE_*` (no llegó a haber ninguna en este proyecto, pero es la convención a seguir si se añade alguna).
 
-Más contexto y verificación real (arranque cronometrado antes/después): [`prompts-AGB.md` §3.14](../../prompts-AGB.md#314-migración-de-create-react-app-a-vite).
+Más contexto y verificación real (arranque cronometrado antes/después): [`prompts-AGB.md` §3.14](../../entrega-frontend-AGB/prompts-AGB.md#314-migración-de-create-react-app-a-vite).

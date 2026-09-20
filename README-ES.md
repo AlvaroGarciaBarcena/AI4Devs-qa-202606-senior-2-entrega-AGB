@@ -222,7 +222,7 @@ La suite E2E pilota un navegador real contra tu aplicación en marcha y cubre au
 │   ├── features/               Ficheros *.feature — un escenario = una historia de usuario real
 │   └── steps/                   Implementación de los pasos
 ├── openspec/                 Especificaciones de capacidad de lo que hace el sistema hoy, con trazabilidad a la rama/commit que implementó cada una
-├── prompts-AGB.md            Diario de desarrollo: cada rama, prompt y hallazgo de la construcción de este proyecto
+├── entrega-frontend-AGB/     Diario de desarrollo del primer ejercicio (Lección 11): cada rama, prompt y hallazgo
 └── docker-compose.yml        Definición del contenedor de PostgreSQL
 ```
 
@@ -289,8 +289,8 @@ pkill -f "node_modules/.bin/vite"
 - [`backend/ManifestoBuenasPracticas.md`](./backend/ManifestoBuenasPracticas.md) — convenciones de código del backend.
 - [`openspec/specs/`](./openspec/specs/) — lo que hace el sistema hoy, capacidad por capacidad, con cada requisito trazado a la rama y el commit que lo implementó.
 - [`docs/adr/`](./docs/adr/) — las decisiones de arquitectura reales del proyecto, una por fichero, formato corto (Nygard): qué se decidió, por qué, qué alternativas se rechazaron.
-- [`BRANCHES_LOG`](./BRANCHES_LOG) — índice de las 36 ramas de este proyecto, con enlace directo a la sección de `prompts-AGB.md` que documenta cada una.
-- [`prompts-AGB.md`](./prompts-AGB.md) — el historial de desarrollo completo de este proyecto: cada rama, el razonamiento detrás y los fallos reales encontrados y corregidos por el camino.
+- [`entrega-frontend-AGB/BRANCHES_LOG`](./entrega-frontend-AGB/BRANCHES_LOG) — índice de las 36 ramas del primer ejercicio (Lección 11), con enlace directo a la sección de `prompts-AGB.md` que documenta cada una.
+- [`entrega-frontend-AGB/prompts-AGB.md`](./entrega-frontend-AGB/prompts-AGB.md) — el historial de desarrollo completo de ese primer ejercicio: cada rama, el razonamiento detrás y los fallos reales encontrados y corregidos por el camino. (El segundo ejercicio, QA/Playwright, tiene su propio diario en [`entrega-qa-AGB/`](./entrega-qa-AGB/).)
 
 ## Solución de problemas
 

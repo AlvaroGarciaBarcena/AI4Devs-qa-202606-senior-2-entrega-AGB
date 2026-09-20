@@ -4,7 +4,7 @@ Un ADR es un documento corto (media página, no más) que recoge **una** decisi�
 
 En este proyecto conviven dos niveles de documentación, a propósito, cada uno con su función:
 
-- **[`prompts-AGB.md`](../../prompts-AGB.md)** — el diario completo de la sesión: cada rama, el proceso de investigación, los hallazgos reales por el camino, verificado con PoCs. Es la versión larga, cronológica.
+- **[`prompts-AGB.md`](../../entrega-frontend-AGB/prompts-AGB.md)** — el diario completo de la sesión: cada rama, el proceso de investigación, los hallazgos reales por el camino, verificado con PoCs. Es la versión larga, cronológica.
 - **`docs/adr/`** (este directorio) — la versión corta y atemporal de las decisiones de arquitectura que sobreviven al detalle del proceso. Si solo quieres saber *qué se decidió y por qué*, sin el "cómo se llegó hasta ahí", empieza aquí.
 
 Cada ADR enlaza a la sección de `prompts-AGB.md` donde se puede leer el proceso completo, por si hace falta más contexto.

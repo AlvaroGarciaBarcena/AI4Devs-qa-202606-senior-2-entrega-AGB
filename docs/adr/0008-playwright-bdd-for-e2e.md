@@ -17,4 +17,4 @@ Con OpenSpec ya adoptado (ADR-0007) y sus 56 escenarios escritos en GIVEN/WHEN/T
 - Cada nueva capacidad de OpenSpec tiene un camino directo y mecánico hacia su propio fichero `.feature` — la estructura ya existe, "solo" hace falta escribir los *steps* que implementan cada GIVEN/WHEN/THEN.
 - La traducción de GIVEN/WHEN/THEN a Gherkin es mecánica; escribir los *steps* que de verdad pilotan el navegador/la API es trabajo real de ingeniería, no una generación automática — varios hallazgos reales de esta sesión (ver ADR-0009 y los hallazgos de `prompts-AGB.md` §3.28 en adelante) salieron precisamente de escribir esos *steps* contra la aplicación real.
 
-Más contexto: [`prompts-AGB.md` §3.25](../../prompts-AGB.md#325-primer-escenario-real-con-playwright-bdd-playwright-bdd-agb).
+Más contexto: [`prompts-AGB.md` §3.25](../../entrega-frontend-AGB/prompts-AGB.md#325-primer-escenario-real-con-playwright-bdd-playwright-bdd-agb).

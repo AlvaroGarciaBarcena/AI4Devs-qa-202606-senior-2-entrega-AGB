@@ -19,4 +19,4 @@ Autenticación basada en JWT sin estado (sin sesiones en el servidor): login con
 - Un límite de intentos de login (`express-rate-limit`, 10/15min, más estricto que el límite general de la API) es el único freno real contra fuerza bruta, dado que no hay bloqueo de cuenta tras varios fallos.
 - El `JWT_SECRET` es la única pieza crítica de este modelo — su filtración compromete cualquier sesión pasada o futura hasta que se rote.
 
-Más contexto: [`prompts-AGB.md` §3.19](../../prompts-AGB.md#319-autenticación-de-las-apis-api-auth-agb).
+Más contexto: [`prompts-AGB.md` §3.19](../../entrega-frontend-AGB/prompts-AGB.md#319-autenticación-de-las-apis-api-auth-agb).
