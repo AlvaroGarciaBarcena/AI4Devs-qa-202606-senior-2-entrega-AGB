@@ -1,0 +1,197 @@
+# Registro de prompts y arreglos — Ejercicio de QA (Playwright), Lección 11
+
+Autor: garciabarcenaalvaro@gmail.com
+Asistente: Claude Code (Sonnet 5)
+Fecha: 2026-09-20 / 2026-09-21
+
+Rama base: `evaluacion-nuevos-candidatos-AGB` (commit `16f5222`, antes
+`step-validation-AGB`) -- la punta de toda la entrega del primer
+ejercicio (frontend), reutilizada tal cual como `main` propio del fork
+de este segundo repo (`AI4Devs-qa-202606-senior-2-entrega-AGB`, ver
+`prompts-AGB.md`, sección 3.63, en el repo del primer ejercicio). Ese
+histórico -- 63 secciones sobre backend, frontend, i18n, auth,
+seguridad, etc. -- no se repite aquí: este fichero documenta solo lo
+específico del segundo ejercicio (Playwright/QA), igual que el índice
+de ramas correspondiente vive aparte en
+[`BRANCHES_LOG-qa`](./BRANCHES_LOG-qa) en vez de seguir sumando filas
+al `BRANCHES_LOG` del primer ejercicio.
+
+> Motivo de separar los ficheros: este código va a acabar en un PR
+> contra el `main` real de `LIDR-academy/AI4Devs-qa-202606-senior-2` --
+> mezclar ahí un diario de 65 secciones sobre un ejercicio distinto
+> (aunque el código de base venga de él) sería confuso para quien lo
+> revise. `prompts-AGB.md`/`BRANCHES_LOG` se quedan congelados tal como
+> estaban al cerrar la entrega del primer ejercicio (sección 3.63 / fila
+> 36); todo lo de aquí en adelante para este segundo ejercicio se
+> documenta en este par de ficheros.
+
+## 1. Primer test E2E del ejercicio de QA: `position.spec.ts` (`qa-e2e-position-AGB`)
+
+Antes de escribir nada, se contrastó el checklist de entrega de
+`AI4Devs-qa-202606-senior-2` contra el estado real de este repo: 0
+atributos `data-testid` en todo `frontend/src`, `playwright.config.ts`
+en la raíz (no en `/frontend`), y ningún `/frontend/tests/e2e/
+position.spec.ts`. El usuario preguntó explícitamente qué problema
+habría en mover la suite `/e2e` de la raíz (Playwright-BDD, backend +
+frontend) a `/frontend/tests/e2e/` -- la respuesta, explicada y
+aceptada: gran parte de esa suite no es de frontend (seguridad,
+rate-limiting, hooks de Husky...), el `playwright.config.ts` de la raíz
+orquesta ambos servidores, y decenas de referencias en la documentación
+ya publicada apuntan a esa ruta. Decisión final: `/e2e` se queda tal
+cual, y se crea `/frontend/tests/e2e/` aparte, solo con lo que pide
+este segundo ejercicio.
+
+**Cambios**:
+- `PositionProcess.tsx`: `data-testid="position-title"` en el título,
+  `data-testid="phase-column-<slug>"` en cada columna (slug del nombre
+  real de la fase, sin tildes -- las fases son configurables) y
+  `data-testid="candidate-card-<applicationId>"` en cada ficha.
+- `frontend/playwright.config.ts`: config independiente de la de la
+  raíz, sin `webServer` propio (el README de QA da por hecho que
+  backend y frontend ya están arrancados).
+- `frontend/tests/e2e/position.spec.ts`: los dos escenarios que exige
+  el checklist -- carga del tablero (título, columnas, candidatos en su
+  columna) y arrastrar una ficha a otra fase, comprobando que se mueve
+  visualmente y que se dispara `PUT /candidates/:id` (endpoint real,
+  confirmado en `candidateService.js`/`candidateRoutes.ts` -- el README
+  usa `/candidate/:id` solo como ejemplo genérico) con la fase nueva en
+  el body y respuesta exitosa.
+- `frontend/package.json`: `@playwright/test` como devDependency (misma
+  versión que la raíz) + script `test:e2e`.
+- `frontend/vite.config.ts`: `test.exclude` amplía la lista por defecto
+  de Vitest con `tests/e2e/**` -- sin esto, Vitest intentaba cargar
+  `position.spec.ts` como si fuera un test suyo por el propio nombre
+  del fichero (`*.spec.ts`) y fallaba al toparse con `test.beforeEach`
+  de Playwright.
+- `/prompts/prompts-AGB.md` (nuevo, distinto de este fichero): la lista
+  plana de prompts que exige el README de QA, sin respuestas ni
+  narrativa -- formato distinto a este fichero a propósito.
+
+**Verificación real, no solo escrita**:
+```
+npx tsc --noEmit (frontend)         → OK
+npm test (frontend, vitest)         → 119 passed, sin cambios
+npx playwright test (frontend, x2)  → 2 passed las dos veces (comprobado
+                                       que es repetible, no solo que pasa
+                                       una vez)
+```
+El primer intento de `position.spec.ts` falló dos veces por asumir
+datos del seed (`backend/prisma/seed.ts`) sin comprobar el estado real
+de la base de datos de desarrollo, que llevaba toda la sesión
+acumulando cambios manuales:
+1. Se esperaba a Jane Smith en "Technical Interview" -- de verdad está
+   en "Entrevista cultural" (una fase añadida a mano en pruebas
+   anteriores del primer ejercicio). Se quitó esa aserción, dejando
+   solo a Carlos García y John Doe como referencia (comprobados de
+   verdad contra la API antes de escribir la aserción, no solo leyendo
+   el fichero de seed).
+2. La respuesta real de `GET /position/:id/interviewflow` viene anidada
+   un nivel más de lo asumido (`interviewFlow.interviewFlow.
+   interviewSteps`, no `interviewFlow.interviewSteps`) -- corregido tras
+   inspeccionar la respuesta real con `curl`.
+
+Tras el arreglo, `position.spec.ts` se ejecutó dos veces seguidas con
+resultado idéntico (2/2), y se confirmó por `curl` (no solo por la
+propia aserción del test) que la restauración final deja a Carlos
+García de vuelta en "Initial Screening" -- el mismo estado que da por
+bueno `e2e/steps/hiring-pipeline.steps.ts` en la raíz.
+
+**Hallazgo colateral, sin resolver todavía**: al re-ejecutar
+`hiring-pipeline.feature` de la raíz para comprobar que este cambio no
+la rompía, 2 de sus 6 escenarios fallaron -- pero por datos huérfanos
+de sesiones manuales anteriores (dos candidatos "Nuevo Candidato" sin
+limpiar, restos de una ejecución anterior de "Alta de candidato
+reflejada en el tablero" que falló a mitad y nunca llegó a su propia
+línea de `prisma.candidate.delete`), no por nada de esta rama. Se
+intentó limpiarlos con un script Prisma aparte
+(`backend/cleanup-e2e-orphans.ts`, borrado después de usarlo) pero el
+clasificador de permisos del entorno bloqueó su ejecución (mutación
+directa de base de datos fuera de un test). Queda pendiente, marcado
+para el usuario en vez de forzarlo.
+
+## 2. Limpieza de los huérfanos, "Nico alaslla" y la lentitud puntual de `hiring-pipeline.feature`: investigado, sin cuello de botella real
+
+Continuación directa de la sección 1. El usuario pidió instrucciones
+para limpiar él mismo los candidatos huérfanos "Nuevo Candidato" (el
+mismo script de la sección anterior, esta vez ejecutado fuera del
+sandbox -- sin el clasificador de permisos de por medio, sí funcionó).
+Al reejecutar `hiring-pipeline.feature` para confirmar la limpieza, el
+propio escenario "Alta de candidato reflejada en el tablero" volvió a
+fallar y dejó **otro** huérfano (id 409) -- limpiado también, con el
+mismo script.
+
+El volcado de accesibilidad que capturó Playwright al fallar mostraba
+al candidato ya presente en la columna correcta en el momento del
+fallo: la aserción `toBeVisible()` expiró (5s) antes de que la página
+terminara de renderizar, no porque el dato estuviera mal. Eso, junto
+con que `Carlos García` seguía confirmado por API en su fase correcta
+mientras tanto, señalaba a lentitud/timing, no a un fallo de lógica --
+ni de esta rama (los `data-testid` son aditivos) ni del propio
+`hiring-pipeline.feature` (no se tocó).
+
+El usuario aclaró además que **"Nico alaslla" no es un huérfano**: es
+un candidato que creó él mismo a propósito, como prueba de que el alta
+de un candidato nuevo funciona, y debía seguir existiendo. El filtro
+del script de limpieza (`firstName: 'Nuevo', lastName: 'Candidato'`)
+nunca lo tocó -- confirmado con la misma llamada real a la API que ya
+se venía usando en toda esta sección, no de memoria.
+
+**Investigación de la lentitud, a petición del usuario ("no me gustó
+ese fallo recurrente de lentitud")** -- se comprobó cada sospechoso
+habitual con datos reales, no solo leyendo el código:
+
+- Tiempos reales de los tres endpoints que carga el tablero
+  (`/position`, `/position/:id/candidates`, `/position/:id/
+  interviewflow`), medidos con `curl -w "%{time_total}"` tres veces
+  seguidas: **2-4 milisegundos** cada uno. Sin margen para explicar un
+  timeout de 5 segundos.
+- Login (`authService.ts`): usa `bcrypt.compare` (asíncrono), no
+  `compareSync` -- no bloquea el event loop de Node.
+- `getCandidatesByPositionService` (`positionService.ts`): un único
+  `findMany` con `include` (candidato, entrevistas, fase); la media y
+  el conteo de entrevistas sin puntuar se calculan en memoria después
+  -- no hay patrón N+1.
+- El rate limiter (`express-rate-limit`) usa un mapa en memoria, O(1)
+  por petición.
+- Modo dev del backend (`ts-node-dev --transpile-only`): sin chequeo de
+  tipos en caliente, no añade lentitud extra sobre el modo compilado.
+- Se revisó también si el propio `ts-node-dev --respawn` podía estar
+  reiniciando el proceso al crear/borrar `backend/cleanup-e2e-
+  orphans.ts` (dentro de `backend/`, el propio directorio que vigila) --
+  descartado revisando el log real del proceso (`[INFO] ts-node-dev`
+  arrancó una vez, sin ningún "Restarting" posterior).
+- Único hallazgo real, inofensivo: en desarrollo, `React.StrictMode`
+  duplica cada fetch al montar un componente (se ve literalmente cada
+  `GET` repetido dos veces en milisegundos en el log del backend) --
+  comportamiento deliberado de React para detectar efectos secundarios
+  mal escritos, no existe en producción, y con 2-4ms por llamada no
+  acerca nada a un timeout de 5s.
+
+**Conclusión, documentada para no repetir esta misma investigación si
+vuelve a pasar**: no hay ningún cuello de botella real identificado en
+backend, base de datos ni frontend -- lo más probable es un pico
+puntual del propio entorno (arranque de Chromium, una pausa de
+garbage collection, contención del sandbox en el que corre esta
+sesión), no un problema de la aplicación. A petición explícita del
+usuario, **no se sube el timeout de Playwright** -- ni aquí ni en
+ningún otro sitio -- para no enmascarar un fallo real futuro. Si
+`hiring-pipeline.feature` (u otro escenario) vuelve a fallar así --
+dato correcto en el volcado de accesibilidad, aserción de visibilidad
+expirada -- ya se sabe que no hace falta repetir esta ronda completa de
+comprobaciones: revisar primero si fue un pico puntual (reejecutar sin
+cambiar nada) antes de sospechar de una regresión real.
+
+## 3. Este mismo reorden: `prompts-qa-AGB.md` y `BRANCHES_LOG-qa` en vez de seguir el diario del primer ejercicio
+
+El usuario notó que, al partir la base de este ejercicio de la rama
+final del primer ejercicio (sección 3.63 de `prompts-AGB.md`), las
+secciones 3.64 y 3.65 recién escritas -- y la fila 37 de
+`BRANCHES_LOG` -- estaban mezclando la documentación de un ejercicio
+completamente distinto en los ficheros del primero. Se deshizo esa
+mezcla: `prompts-AGB.md` y `BRANCHES_LOG` vuelven a su estado exacto al
+cerrar la sección 3.63 / fila 36 (el mismo contenido que ya está
+publicado en el PR #22 del repo original y el PR #37 del repo privado),
+y las secciones 1 y 2 de arriba -- junto con la fila 1 de
+`BRANCHES_LOG-qa` -- son la primera documentación que vive
+exclusivamente en este par de ficheros nuevos, dedicados solo al
+ejercicio de QA.

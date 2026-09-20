@@ -1,0 +1,24 @@
+# Índice de ramas — Ejercicio de QA (Playwright), Lección 11
+
+Igual que [`BRANCHES_LOG`](./BRANCHES_LOG), pero dedicado solo al
+segundo ejercicio (`AI4Devs-qa-202606-senior-2`). No repite las 36
+filas de ese fichero -- este arranca desde la rama que ya reunía todo
+el trabajo del primer ejercicio.
+
+> **Base**: `evaluacion-nuevos-candidatos-AGB` (commit `16f5222`, fila
+> 36 de `BRANCHES_LOG`), reutilizada como `main` del fork de este
+> segundo repo:
+> https://github.com/AlvaroGarciaBarcena/AI4Devs-qa-202606-senior-2-entrega-AGB
+> (ver `BRANCHES_LOG`, nota de la sección 3.63/PR de publicación, y
+> `prompts-qa-AGB.md`, sección 3).
+
+| # | Rama | Fecha (última actividad) | Commits propios | Sección(es) en `prompts-qa-AGB.md` |
+|---|---|---|---|---|
+| 1 | `qa-e2e-position-AGB` | 2026-09-21 00:15 | `adbfceb`·`33ea32d`·`4303917` | [§1](./prompts-qa-AGB.md#1-primer-test-e2e-del-ejercicio-de-qa-positionspects-qa-e2e-position-agb) · [§2](./prompts-qa-AGB.md#2-limpieza-de-los-huérfanos-nico-alaslla-y-la-lentitud-puntual-de-hiring-pipelinefeature-investigado-sin-cuello-de-botella-real) |
+
+## Cómo leer esto
+
+Mismo criterio que `BRANCHES_LOG`: "Commits propios" son solo los que
+esa rama añade sobre la anterior de esta misma tabla (aquí, sobre
+`evaluacion-nuevos-candidatos-AGB`, que no aparece como fila propia
+porque pertenece al primer ejercicio).

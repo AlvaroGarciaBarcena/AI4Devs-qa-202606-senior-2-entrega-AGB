@@ -289,7 +289,7 @@ pkill -f "node_modules/.bin/vite"
 - [`backend/ManifestoBuenasPracticas.md`](./backend/ManifestoBuenasPracticas.md) — convenciones de código del backend.
 - [`openspec/specs/`](./openspec/specs/) — lo que hace el sistema hoy, capacidad por capacidad, con cada requisito trazado a la rama y el commit que lo implementó.
 - [`docs/adr/`](./docs/adr/) — las decisiones de arquitectura reales del proyecto, una por fichero, formato corto (Nygard): qué se decidió, por qué, qué alternativas se rechazaron.
-- [`BRANCHES_LOG`](./BRANCHES_LOG) — índice de las 37 ramas de este proyecto, con enlace directo a la sección de `prompts-AGB.md` que documenta cada una.
+- [`BRANCHES_LOG`](./BRANCHES_LOG) — índice de las 36 ramas de este proyecto, con enlace directo a la sección de `prompts-AGB.md` que documenta cada una.
 - [`prompts-AGB.md`](./prompts-AGB.md) — el historial de desarrollo completo de este proyecto: cada rama, el razonamiento detrás y los fallos reales encontrados y corregidos por el camino.
 
 ## Solución de problemas
