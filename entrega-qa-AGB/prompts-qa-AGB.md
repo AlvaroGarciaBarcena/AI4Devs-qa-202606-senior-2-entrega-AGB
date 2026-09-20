@@ -411,3 +411,16 @@ Verificado tras el cambio: `tsc` limpio, 119/119 tests unitarios sin
 cambios, y `position.spec.ts` ejecutado dos veces seguidas (2/2 ambas
 veces) -- evidencia de ejecución regenerada en
 `/prompts/evidencia-ejecucion-AGB.txt`.
+
+## 10. Borrado `/VERSION`: vestigio del starter, sin ningún uso
+
+El usuario preguntó para qué servía `/VERSION` (contenido: `0.0.0.001`,
+presente desde el *Initial commit*). Comprobado antes de responder: sin
+ninguna referencia en todo el código (backend, frontend, Docker, CI,
+`package.json`...) ni en ningún README o doc del proyecto -- vestigio
+de la plantilla de partida de LIDR-academy, sin relación con esta app.
+Borrado a petición del usuario ("si no aporta, fuera").
+
+Solo en este repo -- el mismo fichero sigue existiendo en
+`AI4Devs-frontend-202606-senior-2` (la entrega del primer ejercicio,
+ya cerrada), que no se toca por esto.
