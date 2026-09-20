@@ -324,3 +324,13 @@ propio repo del primer ejercicio (que sigue abierto a seguir
 evolucionando) cuando toque, no a este PR de QA. Queda documentado
 aquí como referencia para esa futura reorganización, si se decide
 hacerla.
+
+## 8. Descripción del PR guardada como fichero, además de en el scratchpad
+
+La descripción del PR (plantilla del checklist + una sección "Punto de
+partida" explicando por qué el diff es grande y qué es realmente nuevo,
+y otra justificando las dos configuraciones de Playwright) se redactó
+primero en un fichero temporal fuera del repo. El usuario pidió
+guardarla también aquí, para no depender de que sobreviva el
+directorio temporal de la sesión hasta el momento de abrir el PR de
+verdad: [`/prompts/PR-DESCRIPTION-QA.md`](./prompts/PR-DESCRIPTION-QA.md).
