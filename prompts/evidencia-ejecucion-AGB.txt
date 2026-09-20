@@ -1,0 +1,13 @@
+$ date
+lun 21 sep 2026 00:31:28 CEST
+
+$ npx playwright test
+npm notice run frontend@0.1.0 npx
+npm notice run 'playwright' test
+
+Running 2 tests using 1 worker
+
+  ✓  1 [chromium] › tests/e2e/position.spec.ts:60:1 › la página de position carga el título, las columnas de fase y cada candidato en su columna correcta (1.2s)
+  ✓  2 [chromium] › tests/e2e/position.spec.ts:75:1 › arrastrar la ficha de un candidato a otra fase la mueve visualmente y dispara el PUT al backend con la fase nueva (2.0s)
+
+  2 passed (3.7s)

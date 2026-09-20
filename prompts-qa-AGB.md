@@ -271,3 +271,20 @@ confirmado, en `AI4Devs-frontend-202606-senior-2` se volvió a
 (`git branch -D qa-e2e-position-AGB`) y se eliminó el remoto `qa-fork`
 (ya no tiene ninguna función ahí). Ese repo vuelve a estar centrado
 solo en el primer ejercicio.
+
+## 6. Sincronización final del `main` del fork y evidencia de ejecución para la entrega
+
+Al comprobar que `AI4Devs-frontend-202606-senior-2` coincidía al 100%
+con lo publicado en GitHub (PR #22 y PR #37), salió a la luz un
+commit de documentación (`3077f97`, sección 3.63: el renombrado de la
+rama y la creación de este mismo fork) que nunca se había empujado a
+ninguno de los dos remotos -- ni tampoco, por tanto, al `main` de este
+fork de QA, que seguía en `16f5222`. Sincronizados los tres: `fork`
+(PR #22), `personal` (PR #37) y el `main` de este fork -- los tres en
+`3077f97`, confirmado por hash antes y después de cada `push`.
+
+Capturada también la evidencia de ejecución que exige el checklist de
+entrega: salida completa de `npx playwright test` (los dos escenarios
+de `position.spec.ts`, 2/2) contra el backend y frontend reales
+arrancados desde este mismo directorio, guardada en
+[`/prompts/evidencia-ejecucion-AGB.txt`](./prompts/evidencia-ejecucion-AGB.txt).
