@@ -30,6 +30,19 @@ type InterviewFlow = {
     };
 };
 
+// Los nombres de fase son configurables (positionProcess.addStep) y pueden
+// llevar acentos o espacios -- no sirven tal cual como data-testid. Se
+// normalizan a un slug estable (sin tildes, en minúsculas, separado por
+// guiones) en vez de usar el id numérico de la fase, para que el selector
+// siga siendo legible en las pruebas E2E (ver /frontend/tests/e2e).
+const toTestId = (value: string) =>
+    value
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
 const PositionProcess: React.FC = () => {
     const { t } = useTranslation();
     const { id } = useParams<{ id: string }>();
@@ -192,7 +205,7 @@ const PositionProcess: React.FC = () => {
     return (
         <Container className="mt-5">
             <Link to="/positions" className="d-inline-block mb-3">{t('positionProcess.back')}</Link>
-            <h2 className="mb-4 py-2 sticky-top bg-white border-bottom">
+            <h2 className="mb-4 py-2 sticky-top bg-white border-bottom" data-testid="position-title">
                 {t('positionProcess.title')}{flow.positionName}
             </h2>
             {moveError && <Alert variant="danger" dismissible onClose={() => setMoveError('')}>{moveError}</Alert>}
@@ -221,6 +234,7 @@ const PositionProcess: React.FC = () => {
                         return (
                             <Col md={Math.max(3, Math.floor(12 / steps.length))} key={step.id} className="mb-4">
                                 <div
+                                    data-testid={`phase-column-${toTestId(step.name)}`}
                                     className={`p-2 bg-light border rounded ${dragOverStepId === step.id ? 'border-primary border-2' : ''}`}
                                     // Zona donde soltar una tarjeta arrastrada: el navegador solo
                                     // dispara onDrop si onDragOver hace preventDefault (si no, un
@@ -252,6 +266,7 @@ const PositionProcess: React.FC = () => {
                                     {stepCandidates.map((candidate) => (
                                         <Card
                                             key={candidate.applicationId}
+                                            data-testid={`candidate-card-${candidate.applicationId}`}
                                             className="mb-2 shadow-sm"
                                             style={{ cursor: 'grab' }}
                                             // Arrastrar con ratón es solo un atajo de conveniencia: el

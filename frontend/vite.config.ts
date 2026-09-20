@@ -1,5 +1,6 @@
 /// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
+import { configDefaults } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 
 // https://vite.dev/config/
@@ -21,5 +22,11 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    // tests/e2e/ es de Playwright (ver playwright.config.ts), no de
+    // Vitest -- sin esto, Vitest intenta cargar position.spec.ts como si
+    // fuera uno de los suyos por el propio nombre del fichero (*.spec.ts)
+    // y falla al encontrar `test.beforeEach` de Playwright en vez del
+    // suyo.
+    exclude: [...configDefaults.exclude, 'tests/e2e/**'],
   },
 });

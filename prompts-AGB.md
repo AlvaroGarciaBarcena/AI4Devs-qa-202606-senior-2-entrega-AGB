@@ -6617,3 +6617,88 @@ que exige ese repo, etc.), siguiendo el mismo patrón de siempre --
 antes de tocar código, se relee con atención el `README.md` de
 `AI4Devs-qa-202606-senior-2` para confirmar exactamente qué pide la
 entrega.
+
+## 3.64 Primer test E2E del ejercicio de QA: `position.spec.ts` (`qa-e2e-position-AGB`)
+
+Antes de escribir nada, se contrastó el checklist de entrega de
+`AI4Devs-qa-202606-senior-2` contra el estado real de este repo: 0
+atributos `data-testid` en todo `frontend/src`, `playwright.config.ts`
+en la raíz (no en `/frontend`), y ningún `/frontend/tests/e2e/
+position.spec.ts`. El usuario preguntó explícitamente qué problema
+habría en mover la suite `/e2e` de la raíz (Playwright-BDD, backend +
+frontend) a `/frontend/tests/e2e/` -- la respuesta, explicada y
+aceptada: gran parte de esa suite no es de frontend (seguridad,
+rate-limiting, hooks de Husky...), el `playwright.config.ts` de la raíz
+orquesta ambos servidores, y decenas de referencias en la documentación
+ya publicada apuntan a esa ruta. Decisión final: `/e2e` se queda tal
+cual, y se crea `/frontend/tests/e2e/` aparte, solo con lo que pide
+este segundo ejercicio.
+
+**Cambios**:
+- `PositionProcess.tsx`: `data-testid="position-title"` en el título,
+  `data-testid="phase-column-<slug>"` en cada columna (slug del nombre
+  real de la fase, sin tildes -- las fases son configurables, ver
+  sección 3.54) y `data-testid="candidate-card-<applicationId>"` en
+  cada ficha.
+- `frontend/playwright.config.ts`: config independiente de la de la
+  raíz, sin `webServer` propio (el README de QA da por hecho que
+  backend y frontend ya están arrancados).
+- `frontend/tests/e2e/position.spec.ts`: los dos escenarios que exige
+  el checklist -- carga del tablero (título, columnas, candidatos en su
+  columna) y arrastrar una ficha a otra fase, comprobando que se mueve
+  visualmente y que se dispara `PUT /candidates/:id` (endpoint real,
+  confirmado en `candidateService.js`/`candidateRoutes.ts` -- el README
+  usa `/candidate/:id` solo como ejemplo genérico) con la fase nueva en
+  el body y respuesta exitosa.
+- `frontend/package.json`: `@playwright/test` como devDependency (misma
+  versión que la raíz) + script `test:e2e`.
+- `frontend/vite.config.ts`: `test.exclude` amplía la lista por defecto
+  de Vitest con `tests/e2e/**` -- sin esto, Vitest intentaba cargar
+  `position.spec.ts` como si fuera un test suyo por el propio nombre
+  del fichero (`*.spec.ts`) y fallaba al toparse con `test.beforeEach`
+  de Playwright.
+- `/prompts/prompts-AGB.md` (nuevo, fuera de este diario): la lista
+  plana de prompts que exige el README de QA, sin respuestas ni
+  narrativa -- formato distinto a este fichero a propósito.
+
+**Verificación real, no solo escrita**:
+```
+npx tsc --noEmit (frontend)         → OK
+npm test (frontend, vitest)         → 119 passed, sin cambios
+npx playwright test (frontend, x2)  → 2 passed las dos veces (comprobado
+                                       que es repetible, no solo que pasa
+                                       una vez)
+```
+El primer intento de `position.spec.ts` falló dos veces por asumir
+datos del seed (`backend/prisma/seed.ts`) sin comprobar el estado real
+de la base de datos de desarrollo, que llevaba toda la sesión
+acumulando cambios manuales:
+1. Se esperaba a Jane Smith en "Technical Interview" -- de verdad está
+   en "Entrevista cultural" (una fase añadida a mano en pruebas
+   anteriores de la sección 3.54). Se quitó esa aserción, dejando solo
+   a Carlos García y John Doe como referencia (comprobados de verdad
+   contra la API antes de escribir la aserción, no solo leyendo el
+   fichero de seed).
+2. La respuesta real de `GET /position/:id/interviewflow` viene anidada
+   un nivel más de lo asumido (`interviewFlow.interviewFlow.
+   interviewSteps`, no `interviewFlow.interviewSteps`) -- corregido tras
+   inspeccionar la respuesta real con `curl`.
+
+Tras el arreglo, `position.spec.ts` se ejecutó dos veces seguidas con
+resultado idéntico (2/2), y se confirmó por `curl` (no solo por la
+propia aserción del test) que la restauración final deja a Carlos
+García de vuelta en "Initial Screening" -- el mismo estado que da por
+bueno `e2e/steps/hiring-pipeline.steps.ts` en la raíz.
+
+**Hallazgo colateral, sin resolver todavía**: al re-ejecutar
+`hiring-pipeline.feature` de la raíz para comprobar que este cambio no
+la rompía, 2 de sus 6 escenarios fallaron -- pero por datos huérfanos
+de sesiones manuales anteriores (dos candidatos "Nuevo Candidato" sin
+limpiar, restos de una ejecución anterior de "Alta de candidato
+reflejada en el tablero" que falló a mitad y nunca llegó a su propia
+línea de `prisma.candidate.delete`), no por nada de esta rama. Se
+intentó limpiarlos con un script Prisma aparte
+(`backend/cleanup-e2e-orphans.ts`, borrado después de usarlo) pero el
+clasificador de permisos del entorno bloqueó su ejecución (mutación
+directa de base de datos fuera de un test). Queda pendiente, marcado
+para el usuario en vez de forzarlo.

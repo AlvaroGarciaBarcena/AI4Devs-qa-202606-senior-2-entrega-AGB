@@ -69,6 +69,7 @@ línea de cada rama, y para saber dónde empieza cada tema hay que saber esto).
 | 34 | `interview-scoring-on-move-AGB` | 2026-09-20 22:14 | `ec8ced0`·`704a789`·`81d4b56`·`e37eb0b`·`da0d52f`·`be07b36`·`16d8e7b`·`bc7bd05`·`7e920e0`·`126b9b9`·`7922c95`·`acfc133`·`6512dd2` | [§3.55](./prompts-AGB.md#355-puntuar-la-entrevista-al-mover-a-un-candidato-de-fase-interview-scoring-on-move-agb)–[§3.60](./prompts-AGB.md#360-dos-hooks-de-pre-commit-husky-que-no-vuelva-a-pasar-lo-de-la-sección-359) |
 | 35 | `tenant-isolation-AGB` | 2026-09-20 22:40 | `28c5c8c`·`eceb5e8` | [§3.61](./prompts-AGB.md#361-auditoría-de-ciberseguridad-completa-aislamiento-entre-empresas-roto-tenant-isolation-agb) |
 | 36 | `evaluacion-nuevos-candidatos-AGB` (antes `step-validation-AGB`) | 2026-09-20 22:46 | `2358ef3` | [§3.62](./prompts-AGB.md#362-hallazgo-secundario-de-la-auditoría-la-fase-destino-no-se-validaba-evaluacion-nuevos-candidatos-agb-antes-step-validation-agb) · [§3.63](./prompts-AGB.md#363-renombrar-la-rama-y-preparar-la-entrega-del-segundo-ejercicio-qaplaywright) |
+| 37 | `qa-e2e-position-AGB` | 2026-09-20 23:38 | (pendiente de commit) | [§3.64](./prompts-AGB.md#364-primer-test-e2e-del-ejercicio-de-qa-positionspects-qa-e2e-position-agb) |
 
 ## Cómo leer esto
 
