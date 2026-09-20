@@ -288,3 +288,39 @@ entrega: salida completa de `npx playwright test` (los dos escenarios
 de `position.spec.ts`, 2/2) contra el backend y frontend reales
 arrancados desde este mismo directorio, guardada en
 [`/prompts/evidencia-ejecucion-AGB.txt`](./prompts/evidencia-ejecucion-AGB.txt).
+
+## 7. Qué parte de `/e2e` es realmente "de frontend" (sin moverla)
+
+Al preparar la descripción del PR, el usuario propuso un refinamiento
+de la idea de la sección 1 (mover `/e2e` a `/frontend/tests/e2e`): en
+vez de todo o nada, mover solo las features que de verdad son E2E de
+frontend (navegador real), dejando el resto donde está. Comprobado
+grep por grep sobre cada `*.steps.ts` (no solo por el nombre del
+`.feature`, para no dar nada por hecho):
+
+**Sí usan un navegador real (`page.goto`/`page.locator`/etc.) -- E2E
+de frontend en el sentido estricto**: `accessibility`,
+`authentication`, `candidate-editing`, `candidate-intake`,
+`file-upload`, `frontend-performance`, `hiring-pipeline`,
+`internationalization`, `position-catalog` (9 de 12).
+
+**No abren ningún navegador -- backend/tooling puro, usan
+Playwright-BDD solo como *runner*, no para interacción con la
+interfaz**: `security-hardening` y `developer-tooling` (llaman a la
+API directamente con `APIResponse`, o lanzan procesos: `npm audit`,
+`npm exec jest`, los propios hooks de Husky), y `rate-limiting`, mismo
+patrón (3 de 12).
+
+**Por qué no se mueve, aun así**: esa suite ya está publicada y
+revisada como parte de la entrega del primer ejercicio (PR #22 de
+`AI4Devs-frontend-202606-senior-2`, que se da por cerrado salvo
+comentario de los profesores). El `playwright.config.ts` de la raíz
+tiene lógica no trivial atada a que las doce estén juntas
+(`defineBddConfig` con un único glob, la exclusión de
+`authentication`/`zz-rate-limiting` del proyecto con sesión, un
+`globalSetup` compartido) -- separar 9 de 12 exige reescribir esa
+configuración, no solo mover ficheros, y ese trabajo le corresponde al
+propio repo del primer ejercicio (que sigue abierto a seguir
+evolucionando) cuando toque, no a este PR de QA. Queda documentado
+aquí como referencia para esa futura reorganización, si se decide
+hacerla.
