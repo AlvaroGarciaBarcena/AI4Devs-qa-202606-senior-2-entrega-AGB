@@ -258,3 +258,16 @@ La rama `qa-e2e-position-AGB` sigue existiendo también en
 local sin publicar en ningún otro sitio) -- pero deja de ser donde se
 trabaja: de aquí en adelante, todo lo de este segundo ejercicio pasa
 por este directorio.
+
+El usuario señaló, correctamente, que dejar `qa-e2e-position-AGB`
+también en `AI4Devs-frontend-202606-senior-2` era justo la mezcla que
+se acababa de quitar de los ficheros -- si esta pasa a ser la rama del
+segundo ejercicio, no tiene sentido que siga en el directorio del
+primero. Antes de borrarla se confirmó que no se perdía nada: su
+commit (`c7d4a13`) coincide exactamente con `qa-fork/qa-e2e-position-AGB`
+y con `origin/qa-e2e-position-AGB` de este mismo clon. Con eso
+confirmado, en `AI4Devs-frontend-202606-senior-2` se volvió a
+`evaluacion-nuevos-candidatos-AGB`, se borró la rama
+(`git branch -D qa-e2e-position-AGB`) y se eliminó el remoto `qa-fork`
+(ya no tiene ninguna función ahí). Ese repo vuelve a estar centrado
+solo en el primer ejercicio.
