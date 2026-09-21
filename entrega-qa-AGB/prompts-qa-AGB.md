@@ -468,3 +468,46 @@ verificación E2E en vivo de los tres escenarios de `hiring-pipeline`/
 peticiones seguía agotado (mismo hallazgo de la sección 2/nota de
 corrección) y el contenido es idéntico byte a byte al ya verificado en
 vivo en el repo de origen, así que no aportaba nada repetirlo aquí.
+
+## 12. Necesidad detectada: comprobar qué rama sirve realmente el backend antes de fiarse de un resultado E2E (pendiente de construir)
+
+Durante la sección 3.65 (repo de origen) se dieron, en la misma
+sesión, dos incidentes relacionados -- ninguno de los dos causado por
+los cambios en sí, los dos capaces de dar una conclusión equivocada
+sobre un resultado E2E si no se detectan:
+
+1. **El backend/frontend en marcha eran de otra rama/repo**: con los
+   mismos puertos de siempre (`3000`/`3010`), los procesos que
+   respondían ahí llevaban un rato siendo los de
+   `AI4Devs-qa-202606-senior-2-entrega-AGB` (el clon de QA, sección 5),
+   no los de `AI4Devs-frontend-202606-senior-2` -- nunca se pararon al
+   volver a trabajar en este otro repo. La suite E2E del repo de
+   origen se estuvo ejecutando de verdad contra el código de este otro
+   repo, sin ningún aviso: mismos puertos, mismo aspecto, código
+   distinto.
+2. **Un mismo backend, dos direcciones, dos límites de peticiones
+   distintos**: `frontend/.env` apuntaba a `http://192.168.1.151:3010`
+   (IP de red local) en vez de `http://localhost:3010`. Es el mismo
+   proceso -- un único `app.listen()` no distingue por qué dirección
+   le llega la petición -- pero el limitador de peticiones
+   (`express-rate-limit`, por IP de origen) contaba las peticiones que
+   llegaban por cada dirección en un cubo separado: `curl
+   localhost:3010` daba por bueno que "el backend responde", mientras
+   las peticiones reales del navegador (por la IP) ya estaban
+   bloqueadas con `429`. Comprobar por un lado y ejecutar la suite por
+   otro llevó a un diagnóstico equivocado durante buena parte de la
+   sesión.
+
+**Lo que hace falta, todavía sin construir**: alguna forma de
+comprobar, antes de fiarse de un resultado E2E, qué versión del código
+está sirviendo de verdad el backend que responde en el puerto
+esperado -- no solo que responde, sino qué commit/rama es. Una opción
+concreta: un endpoint tipo `GET /health` (o similar) que devuelva el
+commit actual (`git rev-parse HEAD`, leído una vez al arrancar el
+proceso) y que `e2e/global-setup.ts` compruebe contra el commit local
+antes de arrancar la suite, fallando pronto y con un mensaje claro
+("el backend en marcha es de otro commit") en vez de dejar que fallen
+escenarios sueltos de forma difícil de explicar. Pendiente de
+construir -- documentado aquí primero porque el usuario pidió dejar
+constancia del hallazgo antes de decidir si se construye ahora o más
+adelante.
