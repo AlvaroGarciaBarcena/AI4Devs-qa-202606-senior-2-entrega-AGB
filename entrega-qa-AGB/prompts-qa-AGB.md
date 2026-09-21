@@ -555,3 +555,32 @@ queda resuelto por la limpieza hecha en el repo de origen.
 
 **Verificado en este repo, no solo copiado a ciegas**: `tsc` limpio y
 95/95 tests unitarios del backend (93 + los 2 de `gitInfo.test.ts`).
+
+## 14. `git merge origin/main`: cierra la divergencia real entre `main` y esta rama
+
+El usuario preguntó por qué `main` y `qa-e2e-position-AGB` no eran
+idénticas -- al comprobarlo con `git merge-base --is-ancestor`, salió
+que `main` **no** era antepasado real de esta rama, aunque el
+contenido de los ficheros coincidiera. Motivo: cada vez que `main`
+recibía algo nuevo del repo de origen (secciones 3, 11 y 13 de este
+mismo diario), se copiaba el contenido final de los ficheros como
+commits nuevos en esta rama, en vez de fusionarlo -- las dos líneas de
+historia divergieron en `3077f97` (el commit del renombrado) y nunca
+volvieron a converger, aunque el resultado final coincidiera cada vez.
+
+**`git merge origin/main`**, con 2 conflictos reales (no falsos
+positivos): `README-ES.md`/`README-EN.md`, en las dos líneas donde
+cada rama había reescrito el mismo texto de forma distinta (esta rama
+menciona "Lección 11"/el segundo ejercicio en `entrega-qa-AGB/`, la
+rama de origen no). Resueltos a favor del texto de esta rama en los
+dos casos -- es el que describe correctamente este repo, que sí
+contiene ambos ejercicios. `entrega-frontend-AGB/BRANCHES_LOG` y
+`prompts-AGB.md` se fusionaron solos, sin conflicto (solo `main` había
+seguido añadiendo secciones ahí desde `3077f97`).
+
+**Verificado antes de comitear la fusión**: `git diff` contra el
+estado previo de esta rama, excluyendo los 4 ficheros con conflicto
+real -- ningún otro fichero cambió de contenido. `tsc` limpio y 95/95
+tests unitarios siguen en verde. Confirmado con
+`git merge-base --is-ancestor origin/main HEAD` que ahora sí es una
+relación de antepasado real, no solo contenido coincidente.
