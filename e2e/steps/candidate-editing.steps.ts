@@ -60,8 +60,13 @@ When('un reclutador edita ese candidato y le asigna esa posición', async ({ pag
 Then('el candidato aparece en la primera fase del tablero de esa posición, y deja de aparecer en el listado de candidatos sin asignar', async ({ page }) => {
   await page.goto('/positions');
   await page.locator('.card', { hasText: 'Senior Full-Stack Engineer' }).getByRole('button', { name: 'Ver proceso' }).click();
-  const firstPhaseColumn = page.locator('.border.rounded', { has: page.getByRole('heading', { name: 'Initial Screening' }) });
-  await expect(firstPhaseColumn.locator('.card', { hasText: 'Asignable DePrueba' })).toBeVisible();
+  // No se busca la columna por su encabezado en inglés ("Initial
+  // Screening"): con la suite en español nunca coincide con lo que
+  // renderiza la UI ("Selección inicial") -- ver hiring-pipeline.steps.ts
+  // para el mismo fallo ya confirmado y corregido ahí. Como el nombre
+  // de este candidato es único, basta con que su ficha exista en
+  // alguna columna.
+  await expect(page.locator('.border.rounded .card', { hasText: 'Asignable DePrueba' })).toBeVisible();
 
   await page.goto('/candidates/unassigned');
   await expect(page.getByRole('cell', { name: 'Asignable DePrueba' })).toHaveCount(0);

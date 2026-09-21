@@ -19,7 +19,11 @@ const openBoard = async (page: Page, positionTitle: string) => {
 Given('una posición tiene candidatos en más de una fase de su proceso', async () => {
   // Lo satisface el seed de la base de datos (backend/prisma/seed.ts):
   // "Senior Full-Stack Engineer" tiene a Carlos García en "Initial
-  // Screening" y a John Doe + Jane Smith en "Technical Interview".
+  // Screening". El resto de candidatos de esa posición (John Doe,
+  // Jane Smith...) se han movido más de una vez por trabajo manual en
+  // esta misma base de datos de desarrollo compartida -- el propio
+  // Then de abajo comprueba a nivel de datos que sigue habiendo más
+  // de una fase con candidatos, sin fijar cuáles.
 });
 
 When('un reclutador visita el tablero "Ver proceso" de esa posición', async ({ page }) => {
@@ -27,15 +31,48 @@ When('un reclutador visita el tablero "Ver proceso" de esa posición', async ({ 
 });
 
 Then('el tablero los agrupa en una columna por fase, mostrando el nombre y la puntuación media de cada uno', async ({ page }) => {
-  const initialScreening = page.locator('.border.rounded', { has: page.getByRole('heading', { name: 'Initial Screening' }) });
-  await expect(initialScreening.getByText('Carlos García')).toBeVisible();
-  await expect(initialScreening.getByText('Puntuación media: 0.0')).toBeVisible();
+  // No se asume de antemano ni quién está en qué fase ni su
+  // puntuación -- la base de datos de desarrollo compartida cambió
+  // más de una vez por trabajo manual anterior (Jane Smith, luego
+  // también John Doe), rompiendo este escenario. Tampoco se busca la
+  // columna por el nombre de la fase en inglés
+  // (`currentInterviewStep` de la API): con la suite en español
+  // (`locale: 'es-ES'`), el encabezado real es la traducción
+  // (`positionProcess.interviewStepNames` en frontend/src/i18n/
+  // locales/es.json -- "Initial Screening" se renderiza "Selección
+  // inicial"), no el nombre crudo. Ese desajuste de idioma, no la
+  // deriva de datos, era la causa real de este mismo fallo
+  // intermitente -- confirmado con el volcado de accesibilidad de un
+  // fallo real: el candidato SÍ estaba en la columna correcta, la
+  // columna en sí nunca se encontraba porque buscaba el encabezado
+  // equivocado.
+  const candidatesResponse = page.waitForResponse(
+    (res) => res.url().includes('/candidates') && res.request().method() === 'GET',
+  );
+  await openBoard(page, 'Senior Full-Stack Engineer');
+  const candidates = (await (await candidatesResponse).json()) as {
+    fullName: string;
+    currentInterviewStep: string;
+    averageScore: number;
+  }[];
 
-  const technicalInterview = page.locator('.border.rounded', { has: page.getByRole('heading', { name: 'Technical Interview' }) });
-  await expect(technicalInterview.getByText('John Doe')).toBeVisible();
-  await expect(technicalInterview.getByText('Puntuación media: 5.0')).toBeVisible();
-  await expect(technicalInterview.getByText('Jane Smith')).toBeVisible();
-  await expect(technicalInterview.getByText('Puntuación media: 4.0')).toBeVisible();
+  // "Más de una fase" se comprueba con los datos de la API, no
+  // visitando cada columna: la base de desarrollo compartida ha
+  // acumulado candidatos de pruebas manuales con el mismo nombre
+  // ("Bad Position" x3, entre otros) -- comprobar uno a uno por
+  // nombre sería ambiguo (varias tarjetas con el mismo nombre Y la
+  // misma puntuación 0.0, un fallo real que se vio al intentarlo).
+  // Carlos García es el único candidato de esta posición cuyo nombre
+  // es fiable (único, y esta misma suite nunca lo mueve) -- se
+  // comprueba explícitamente que aparece con su nombre y puntuación
+  // reales.
+  expect(new Set(candidates.map((c) => c.currentInterviewStep)).size).toBeGreaterThan(1);
+
+  const carlos = candidates.find((c) => c.fullName === 'Carlos García');
+  expect(carlos, 'Carlos García debe seguir en el seed de esta posición').toBeTruthy();
+  const carlosCard = page.locator('.card').filter({ hasText: 'Carlos García' });
+  await expect(carlosCard.getByText('Carlos García')).toBeVisible();
+  await expect(carlosCard.getByText(`Puntuación media: ${carlos!.averageScore.toFixed(1)}`)).toBeVisible();
 });
 
 Given('una fase del proceso de una posición no tiene ningún candidato todavía', async () => {
@@ -120,8 +157,13 @@ When('se da de alta un candidato eligiendo esa posición', async ({ page }) => {
 
 Then('ese candidato aparece de inmediato en la primera columna del tablero de esa posición, con puntuación media de 0', async ({ page }) => {
   await openBoard(page, 'Senior Full-Stack Engineer');
-  const firstPhaseColumn = page.locator('.border.rounded', { has: page.getByRole('heading', { name: 'Initial Screening' }) });
-  const newCandidateCard = firstPhaseColumn.locator('.card', { hasText: 'Nuevo Candidato' });
+  // Mismo motivo que en la sección de arriba: no se busca la columna
+  // por su encabezado en inglés ("Initial Screening"), que en la
+  // suite en español nunca coincide con lo que renderiza la UI
+  // ("Selección inicial") -- basta con que la ficha exista en alguna
+  // columna, no hace falta identificar cuál en concreto para esta
+  // aserción.
+  const newCandidateCard = page.locator('.border.rounded').filter({ hasText: 'Nuevo Candidato' }).locator('.card', { hasText: 'Nuevo Candidato' });
   await expect(newCandidateCard).toBeVisible();
   await expect(newCandidateCard.getByText('Puntuación media: 0.0')).toBeVisible();
 

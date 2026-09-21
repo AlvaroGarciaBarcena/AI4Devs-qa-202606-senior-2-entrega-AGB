@@ -435,3 +435,36 @@ Borrado a petición del usuario ("si no aporta, fuera").
 Solo en este repo -- el mismo fichero sigue existiendo en
 `AI4Devs-frontend-202606-senior-2` (la entrega del primer ejercicio,
 ya cerrada), que no se toca por esto.
+
+## 11. Los cinco arreglos del repo de origen (bug de idioma + menos duplicación), traídos aquí
+
+El repo de origen (`AI4Devs-frontend-202606-senior-2`, "cerrado" salvo
+comentario de los profesores) siguió recibiendo trabajo real: el bug
+de idioma en `hiring-pipeline.steps.ts`/`candidate-editing.steps.ts`/
+`candidate-intake.steps.ts` (sección 3.65 de `prompts-AGB.md` de ese
+repo -- corrige también el diagnóstico equivocado de la sección 2 de
+este mismo fichero, ver la nota añadida ahí) y menos duplicación en
+`positionController.ts`/`.test.ts` (sección 3.66). El usuario pidió
+traer esos mismos cinco ficheros aquí, para que este repo parta de la
+misma base -- después de confirmar explícitamente (con `diff` real
+entre ambos árboles de trabajo, no de memoria) que no había ninguna
+colisión: los únicos ficheros que ya difieren a propósito entre los
+dos repos son los README (el aviso de las dos carpetas) y
+`package-lock.json` (el campo `name`).
+
+**Cómo se hizo**: `main` de este fork, fast-forward otra vez
+(`3077f97` -> `1688185`, mismo mecanismo que las veces anteriores).
+Los cinco ficheros de la rama `qa-e2e-position-AGB` (que no había
+tocado ninguno de los cinco hasta ahora) se copiaron tal cual desde el
+repo de origen -- ya verificados allí en vivo, no hacía falta
+rehacerlo desde cero. Confirmado con `diff` que quedan byte a byte
+idénticos entre los dos repos.
+
+**Verificado en este repo también, no solo copiado a ciegas**: `npx
+tsc --noEmit` limpio, 93/93 tests unitarios del backend en verde, y
+`bddgen` genera sin errores los `.feature` afectados. No se repitió la
+verificación E2E en vivo de los tres escenarios de `hiring-pipeline`/
+`candidate-editing`/`candidate-intake` -- el limitador general de
+peticiones seguía agotado (mismo hallazgo de la sección 2/nota de
+corrección) y el contenido es idéntico byte a byte al ya verificado en
+vivo en el repo de origen, así que no aportaba nada repetirlo aquí.
