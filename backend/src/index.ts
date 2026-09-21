@@ -13,6 +13,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { buildCorsOptions } from './corsOptions';
 import { getListeningAddresses } from './networkAddresses';
+import { getGitInfo } from './gitInfo';
 
 // Extender la interfaz Request para incluir prisma y, tras pasar por
 // requireAuth, el empleado autenticado (payload del JWT: id, role,
@@ -110,6 +111,16 @@ app.get('/', (req, res) => {
   res.send('Hola LTI!');
 });
 
+// Sin autenticar a propósito: sirve para comprobar, antes incluso de
+// intentar iniciar sesión, qué commit/rama está sirviendo de verdad el
+// backend que responde en este puerto -- hallazgo real (prompts-AGB.md,
+// sección 3.65): más de una vez, el backend en marcha resultó ser el de
+// otro repo/rama, mismo puerto, sin ningún aviso. Usado por
+// e2e/global-setup.ts antes de arrancar la suite.
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', git: getGitInfo() });
+});
+
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
   res.type('text/plain');
@@ -119,4 +130,9 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 app.listen(port, () => {
   console.log(`Server listening on port ${port}, reachable at:`);
   getListeningAddresses(port).forEach((address) => console.log(`  ${address}`));
+
+  const gitInfo = getGitInfo();
+  if (gitInfo) {
+    console.log(`  commit ${gitInfo.commit.slice(0, 7)} (rama ${gitInfo.branch})`);
+  }
 });

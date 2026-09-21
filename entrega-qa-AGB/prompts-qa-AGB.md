@@ -511,3 +511,47 @@ escenarios sueltos de forma difícil de explicar. Pendiente de
 construir -- documentado aquí primero porque el usuario pidió dejar
 constancia del hallazgo antes de decidir si se construye ahora o más
 adelante.
+
+## 13. `GET /health` + hook automático, y un incidente real de contaminación visible en la app -- traídos del repo de origen
+
+Construido lo que quedó pendiente en la sección 12, en el repo de
+origen (`AI4Devs-frontend-202606-senior-2`, `prompts-AGB.md`, secciones
+3.67-3.68), y traído aquí igual que los cinco arreglos de la sección
+11.
+
+**`GET /health` + `backend/src/gitInfo.ts`**: expone el commit/rama
+actuales del backend en marcha (`git rev-parse HEAD`, comando
+inyectable para poder testear sin depender de git real -- mismo patrón
+que `networkAddresses.ts`). Ruta pública a propósito, sin
+`requireAuth`: hace falta comprobarla antes incluso de intentar el
+login.
+
+**`e2e/global-setup.ts`**: antes de nada, compara ese commit contra
+`git rev-parse HEAD` de este mismo repo -- si no coinciden, falla con
+un mensaje explícito en vez de escenarios sueltos difíciles de
+explicar. Es el "hook que hace esta comprobación al lanzarlo" que
+pidió el usuario: `global-setup.ts` ya es, en la propia terminología
+de Playwright, el hook que se ejecuta automáticamente al lanzar la
+suite -- no hacía falta un mecanismo aparte. Verificado en el repo de
+origen con los dos caminos (positivo: `candidate-editing.feature`
+completo en verde con la comprobación de por medio; negativo: un
+servidor de mentira sirviendo un commit distinto, detectado con el
+mensaje esperado).
+
+**Incidente real, con consecuencia visible en la propia app**: en el
+repo de origen, la misma base de datos de desarrollo compartida con
+este repo (ambos backends apuntan al mismo Postgres local) terminó con
+posiciones y candidaturas de prueba huérfanas -- visibles de verdad
+para el usuario en "Posiciones" y en el listado de candidatos sin
+asignar -- por escenarios que fallaron bajo el limitador de peticiones
+agotado antes de llegar a su propia limpieza. Investigado con una
+consulta de solo lectura antes de tocar nada, y limpiado de forma
+asimétrica: fixtures inequívocos (nombres de test, sin ambigüedad)
+borrados enteros; candidatos de origen incierto solo desligados de la
+candidatura espuria, no borrados (mismo criterio que "Nico alaslla").
+Como la base de datos es la misma para los dos repos, este incidente y
+su limpieza son compartidos -- no hace falta repetir nada aquí, ya
+queda resuelto por la limpieza hecha en el repo de origen.
+
+**Verificado en este repo, no solo copiado a ciegas**: `tsc` limpio y
+95/95 tests unitarios del backend (93 + los 2 de `gitInfo.test.ts`).
