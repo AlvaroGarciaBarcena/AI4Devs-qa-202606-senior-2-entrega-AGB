@@ -661,3 +661,118 @@ de SonarCloud, no hay forma de confirmar con certeza que este era el
 único hallazgo -- verificado en vivo (`security-hardening.feature`,
 4/4) y `tsc` limpio; se sabrá con certeza tras el reescaneo automático
 que dispara el nuevo commit.
+
+## 17. El reescaneo seguía en rojo: el listado real de anotaciones de SonarCloud sí es accesible (por otra vía), y van 23, no una
+
+El primer arreglo (sección 16) no bastó -- `gh pr checks 15` seguía en
+`fail` tras un reescaneo genuinamente nuevo (31s de duración). La API
+pública de SonarCloud sigue sin servir nada para este proyecto, pero
+las *anotaciones* que el propio check de GitHub deja sobre el commit
+sí son accesibles vía la API de GitHub (`gh api
+repos/.../commits/<sha>/check-runs` para encontrar el `check_run` de
+SonarCloud, y `.../check-runs/<id>/annotations` para su detalle) --
+vía distinta a la usada hasta ahora, encontrada al buscar una forma de
+confirmar la sospecha de que `gitInfo.ts` (fichero nuevo, nunca
+escaneado hasta este PR) tuviera el mismo problema que ya se había
+corregido para `npm` (`npmChildProcess.ts`, regla `typescript:S4036`,
+"PATH variable").
+
+Resultado: 23 anotaciones repartidas por casi todo el repo, no una.
+Confirma la sospecha de la sección 16 sobre qué es "New Code" aquí --
+al ser el primer análisis real del proyecto en SonarCloud, cuenta como
+nuevo casi cualquier fichero, no solo lo tocado en este PR.
+
+**La única de seguridad real (`Vulnerability`, la que de verdad baja
+el *rating*)**: `e2e/global-setup.ts:20`, "Make sure the PATH variable
+only contains fixed, unwriteable directories" (`typescript:S4036`) --
+exactamente la sospecha original sobre `gitInfo.ts`, pero en la
+llamada gemela de `global-setup.ts`. Arreglada igual que
+`npmChildProcess.ts` ya arregló el caso de `npm`: `git` no tiene un
+equivalente a `npm_execpath` (ninguna variable de entorno da su ruta
+absoluta), así que se restringe el `PATH` del proceso hijo a rutas de
+sistema fijas (`/usr/bin:/bin:/usr/local/bin`, confirmado con `which
+git` tanto en esta máquina como en los runners de GitHub Actions) en
+vez de heredar el `PATH` completo, que sí puede incluir directorios
+escribibles por el usuario. Se aplica el mismo arreglo en
+`gitInfo.ts`, aunque SonarCloud no lo señalara ahí -- mismo patrón
+exacto, y de lo contrario habría bastado con que un reescaneo futuro
+lo detectara por separado.
+
+**El resto (22), todo `Code Smell`/`warning`, no bajan el *rating* de
+seguridad pero se corrigen igual a petición expresa del usuario**
+("las notas son de warnings... corrígelos todos... a menos que no esté
+conforme, en cuyo caso lo comentamos"):
+
+- Import sin prefijo `node:` (`gitInfo.ts`, `networkAddresses.ts`,
+  `fileUploadService.ts`).
+- `isNaN`/`parseInt` globales en vez de `Number.isNaN`/`Number.parseInt`
+  (`candidateController.ts`, `positionController.ts` -- se corrigen
+  también las apariciones idénticas no señaladas por Sonar en los
+  mismos ficheros, por consistencia).
+- Cadena de opcionales (`position?.companyId !== companyId` en vez de
+  `!position || position.companyId !== companyId`) en
+  `positionService.ts` (×4) y `candidateService.ts` (×1) -- equivalencia
+  comprobada a mano antes de aplicarla.
+- Catch que descartaba el error sin usarlo ni explicar por qué
+  (`candidateController.ts`, `getUnassignedCandidates`) -- se añade
+  `console.error`, mismo patrón que ya usan otros catches del propio
+  backend; corregido también el caso gemelo no señalado
+  (`getCandidateById`).
+- **Complejidad cognitiva por encima del límite** en
+  `candidateService.ts`: `addCandidate` (18/15) y
+  `updateCandidateProfile` (26/15). Único arreglo no mecánico de la
+  tanda -- se extraen funciones auxiliares
+  (`resolveFirstStepForNewApplication`, `saveCandidateEducations`,
+  `saveCandidateWorkExperiences`, `saveCandidateResume`,
+  `resolveFirstStepForProfileUpdate`, `replaceCandidateEducations`,
+  `replaceCandidateWorkExperiences`) sin cambiar comportamiento --
+  verificado con los 42 tests ya existentes del fichero, ninguno
+  tocado.
+- **Índice del array como `key` de React** en `WorkHistoryFields.jsx`
+  (×2, educación y experiencia) -- este no es solo un aviso de Sonar,
+  es un bug real: quitar una entrada que no sea la última hace que
+  React reutilice el `DatePicker` equivocado (su estado interno --
+  calendario abierto, foco -- se queda pegado a la posición, no a la
+  entrada). Las entradas no tienen ningún id propio a propósito (se
+  quita al cargar un candidato existente, ver `AddCandidateForm.jsx`,
+  para no arrastrar el id de la BD en un formulario que sustituye la
+  lista entera al guardar). Arreglo: un hook local
+  (`useEntryKeys`) que genera una clave estable por entrada, calculada
+  durante el propio render con una `ref` (sin `useEffect` de por
+  medio), ajena a los datos del formulario -- nunca se manda al padre.
+  **Verificado a mano en el navegador** (no solo con los tests
+  unitarios, que no habrían detectado esto): con el calendario de la
+  fila 3 de 5 abierto, al eliminar la fila 1, el calendario se queda
+  abierto y correctamente asociado a su fila (que ahora es la 2) --
+  antes se habría cerrado solo, sin avisar.
+- Rol ARIA `group` sobre un `<div>` en vez del elemento nativo
+  (`LanguageSwitcher.jsx`) -- cambiado a `<fieldset>`/`<legend>` (con
+  estilos en línea para deshacer su apariencia por defecto), que ya
+  trae el rol "group" implícito y una etiqueta accesible sin
+  `aria-label` redundante.
+- Regex con backtracking potencialmente superlineal
+  (`PositionProcess.tsx`, `toTestId`) -- `/^-+|-+$/g` partido en dos
+  `.replace()` sin alternancia.
+- Objeto de contexto recreado en cada render (`AuthContext.jsx`) --
+  envuelto en `useMemo`.
+- `String.match` en vez de `RegExp.exec` (`developer-tooling.steps.ts`).
+
+**No corregido, comentado en vez de aplicado a ciegas**:
+`e2e/steps/support/prisma.ts:8`, "Do not use internal APIs of your
+dependencies" -- importa `@prisma/client` por ruta relativa desde
+`backend/node_modules/`. El propio comentario del fichero ya explica
+por qué: sin *npm workspaces* (decisión explícita del usuario para
+este proyecto), es la única forma de reutilizar el cliente Prisma ya
+generado en `backend/` sin duplicarlo ni desincronizarlo del schema
+real. Un arreglo "de verdad" aquí sería un cambio de arquitectura
+(workspaces, o una dependencia `@prisma/client` propia de la raíz con
+su propio `prisma generate`), no algo para colar en una tanda de
+limpieza de avisos.
+
+**Verificación completa** antes de commitear: `tsc --noEmit` limpio en
+backend y frontend; 95 tests de backend y 119 de frontend, todos en
+verde; `npm run build` del frontend sin avisos; y 44 escenarios E2E
+reales (no solo los tocados: `accessibility`, `candidate-intake`,
+`candidate-editing`, `hiring-pipeline`, `position-catalog`,
+`file-upload`, `security-hardening`, `developer-tooling`) verdes
+contra el backend y frontend reiniciados desde este mismo clon.
