@@ -181,6 +181,17 @@ expirada -- ya se sabe que no hace falta repetir esta ronda completa de
 comprobaciones: revisar primero si fue un pico puntual (reejecutar sin
 cambiar nada) antes de sospechar de una regresión real.
 
+> **Corrección posterior (2026-09-21)**: esta conclusión era
+> incorrecta. Sí había un cuello de botella real -- no de rendimiento,
+> sino de corrección: el escenario buscaba la columna de fase por su
+> encabezado en **inglés**, que nunca coincide con la interfaz en
+> **español** (mismo volcado de accesibilidad que ya se citó aquí
+> arriba, releído con más atención: el candidato SÍ estaba en la
+> columna correcta, la columna en sí nunca se encontraba). Detalle
+> completo, con el arreglo real, en `AI4Devs-frontend-202606-senior-2`
+> (repo de origen), `prompts-AGB.md`/`entrega-frontend-AGB/`, sección
+> 3.65.
+
 ## 3. Este mismo reorden: `prompts-qa-AGB.md` y `BRANCHES_LOG-qa` en vez de seguir el diario del primer ejercicio
 
 El usuario notó que, al partir la base de este ejercicio de la rama
