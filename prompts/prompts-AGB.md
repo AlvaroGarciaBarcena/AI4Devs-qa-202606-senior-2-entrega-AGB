@@ -27,3 +27,35 @@
 13. "Confirma qué rama es la del renombrado y si sigue documentada tras separar los ficheros de este ejercicio."
 
 14. "Reescribe el fichero de prompts como instrucciones precisas y concisas dirigidas a ti, no como la narrativa completa del proceso -- así es como se evaluará el ejercicio."
+
+15. "Confirma dónde guardaste la descripción del PR."
+
+16. "Guarda la descripción del PR en la carpeta `prompts` del clon local de QA."
+
+17. "Comprueba y explica el aviso de GitHub de que la rama `main` del repo privado no está protegida."
+
+18. "Evalúa si conviene traer al repo de frontend el mismo test que ahora consulta la API en vez de asumir la fase del candidato."
+
+19. "Arregla `hiring-pipeline.steps.ts` (el test ya existente con el problema real) en vez de copiar `position.spec.ts`."
+
+20. "Reduce la duplicación de código de `candidate-intake.steps.ts` (10,3%)."
+
+21. "Reduce también la duplicación de `positionController.ts` (23,6%) y `positionController.test.ts` (13,7%) mientras se espera al limitador."
+
+22. "Verifica qué ficheros cambian entre el repo local de frontend y el de QA antes de sincronizar."
+
+23. "Sube estos arreglos a la entrega del primer ejercicio y deja el repo local sincronizado con el remoto."
+
+24. "Lleva estos mismos arreglos también al repo local de QA, para que parta de la misma base."
+
+25. "Documenta en el repo de QA la necesidad de comprobar que no haya dos backends de ramas distintas respondiendo en el mismo puerto."
+
+26. "Implementa esa comprobación, y además crea un hook que la ejecute automáticamente al lanzar la suite."
+
+27. "Revisa por qué han aparecido candidaturas y posiciones de prueba visibles en la propia aplicación."
+
+28. "Comitea esta versión también al repo remoto de QA."
+
+29. "Espera, falta una cosa antes de continuar."
+
+30. "Actualiza `/prompts/prompts-AGB.md` con los prompts de las últimas horas, en el mismo formato corto que los anteriores."
