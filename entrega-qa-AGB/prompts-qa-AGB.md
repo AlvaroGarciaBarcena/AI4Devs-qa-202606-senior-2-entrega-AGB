@@ -776,3 +776,45 @@ reales (no solo los tocados: `accessibility`, `candidate-intake`,
 `candidate-editing`, `hiring-pipeline`, `position-catalog`,
 `file-upload`, `security-hardening`, `developer-tooling`) verdes
 contra el backend y frontend reiniciados desde este mismo clon.
+
+## 18. Menos duplicación en `candidateService.ts`/`.test.ts`, traída del repo hermano una vez verificada allí
+
+Tras cerrar el *quality gate* (secciones 16-17), el usuario preguntó
+en el repo hermano (`AI4Devs-frontend-202606-senior-2`, PR #22) qué
+quedaba pendiente. Se detectó con `jscpd` una duplicación real en
+`candidateService.ts` (5,61%/3 clones), residuo del propio refactor
+de complejidad cognitiva de la sección 16 -- dos funciones
+(`resolveFirstStepForNewApplication`/`resolveFirstStepForProfileUpdate`)
+repetían el mismo bloque de validación del flujo de entrevistas, y
+otras dos parejas (`saveCandidateEducations`/`saveCandidateWorkExperiences`,
+`replaceCandidateEducations`/`replaceCandidateWorkExperiences`)
+repetían la misma forma de "crear una entrada por cada elemento de una
+lista" variando solo el modelo de dominio.
+
+Arreglado allí primero (mismo criterio que `positionController.ts`,
+extraer solo lo genuinamente idéntico): `requireInterviewFlowConfigured`
+compartido por las dos funciones `resolveFirstStep*`, y un único
+`saveEntries<T>` genérico (parametrizado por el constructor del
+modelo y un callback opcional) usado por las cuatro funciones de
+guardado/sustitución. `jscpd`: 5,61%/3 clones -> 0,00%/0. El fichero
+de test tenía aún más duplicación (14,87%/11 clones) -- extraídos
+`mockPosition(overrides)` y `stubCandidateCreate(data)`; `jscpd`:
+14,87%/11 -> 4,39%/5 (el resto exigiría fusionar tests que comprueban
+cosas realmente distintas, igual que ya se aceptó con
+`positionController.test.ts`).
+
+**Traído aquí una vez verificado allí** (mismo patrón que las
+secciones 11 y 13: arreglo nacido en el repo hermano, portado después
+de confirmarlo en verde). Los dos ficheros de este repo estaban en el
+mismo estado previo al refactor -- confirmado con `diff` antes de
+copiar, no a ciegas -- así que la copia fue directa y exacta. `jscpd`
+sobre ambos ficheros aquí: 2,44%/5 clones (el conjunto sobre 737
+líneas, coherente con los números individuales de arriba).
+
+**Verificado de nuevo en este repo, no solo confiado en la
+verificación del hermano**: `tsc --noEmit` limpio, 95 tests de backend
+en verde (16 de `candidateService.test.ts`, ninguna aserción
+reescrita), y 20 escenarios E2E reales (`candidate-intake`,
+`candidate-editing`, `hiring-pipeline`) contra el backend/frontend de
+este mismo clon, ejercitando `addCandidate`/`updateCandidateProfile`/
+`updateCandidateStage` contra la base de datos real.
