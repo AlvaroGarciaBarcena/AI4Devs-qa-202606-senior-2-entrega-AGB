@@ -31,12 +31,11 @@ const runNpmAuditProductionVulnerabilityCount = (cwd: string): number => {
 };
 
 Given('la API está en marcha', async ({ request }) => {
-  // No hay una ruta de health-check dedicada; una petición cualquiera sin
-  // efectos secundarios (un login fallido) sirve para confirmar que el
-  // servidor responde antes de comparar sus cabeceras.
-  const response = await request.post(`${API_URL}/auth/login`, {
-    data: { email: 'nadie@lti.com', password: 'x' },
-  });
+  // GET /health (backend/src/index.ts) -- sin efectos secundarios ni
+  // autenticación, pensada justo para esto. Antes se usaba un login
+  // deliberadamente fallido (sin ruta de health-check dedicada en aquel
+  // momento); ese literal de contraseña de mentira ya no hace falta.
+  const response = await request.get(`${API_URL}/health`);
   expect(response.status()).toBeLessThan(500);
 });
 

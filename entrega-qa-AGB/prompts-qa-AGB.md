@@ -625,3 +625,39 @@ upstream/main` -- une el historial (para que GitHub acepte el PR) sin
 traer ni un byte de contenido de la plantilla; confirmado con
 `git diff --stat` contra el commit anterior: ninguna diferencia. `tsc`
 sigue limpio después.
+
+## 16. `Quality gate` de SonarCloud: B security rating, de nuevo el mismo patrón que la primera vez
+
+El usuario avisó de que el PR #15 no pasaba el *quality gate* de
+SonarCloud -- "B Security Rating on New Code" (comentario real del bot
+en el PR, confirmado con `gh pr view --json comments`). El proyecto de
+SonarCloud de `LIDR-academy` no es accesible vía API pública ni por
+navegador sin sesión (a diferencia del mirror privado propio, en el
+otro repo) -- confirmado con varios intentos (`components/show`,
+`issues/search`, `hotspots/search`, todos "Project doesn't exist").
+Como "New Code" aquí es, en la práctica, casi todo el repo (la
+plantilla original no comparte casi nada con nuestro código), se buscó
+el mismo patrón que ya causó esto la primera vez (regla
+`typescript:S2068`, "hard-coded password": literales asignados a una
+propiedad/variable con nombre de contraseña).
+
+**Encontrado**: `e2e/steps/security-hardening.steps.ts`, un login
+deliberadamente fallido (`password: 'x'`) usado solo para confirmar
+que la API responde, sin ningún efecto secundario, antes de comparar
+cabeceras -- mismo propósito exacto que el `GET /health` que acabamos
+de construir (sección 13). Su propio comentario decía literalmente "no
+hay una ruta de health-check dedicada" -- ya no es verdad. Cambiado a
+usar `GET /health` directamente: elimina el literal de contraseña por
+completo (mejor que envolverlo en `// NOSONAR`, que sigue siendo el
+literal ahí) y de paso dejaba de fingir un login para lo que ya no
+hace falta fingir.
+
+Revisados también el resto de literales tipo contraseña/secreto/token
+del repo (`grep` amplio) -- el resto son valores de mentira en ficheros
+`*.test.ts`/`*.test.js` (mocks de Jest/Vitest, patrón estándar y muy
+común, no tocados por ahora) o ya tenían su `// NOSONAR` desde la
+primera entrega (`rate-limiting.steps.ts`). Sin acceso al listado real
+de SonarCloud, no hay forma de confirmar con certeza que este era el
+único hallazgo -- verificado en vivo (`security-hardening.feature`,
+4/4) y `tsc` limpio; se sabrá con certeza tras el reescaneo automático
+que dispara el nuevo commit.
