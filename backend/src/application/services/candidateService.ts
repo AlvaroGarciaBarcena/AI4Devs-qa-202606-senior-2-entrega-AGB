@@ -10,6 +10,23 @@ import { getFirstInterviewStepForPosition } from './positionService';
 
 const prisma = new PrismaClient();
 
+// Compartido por resolveFirstStepForNewApplication y
+// resolveFirstStepForProfileUpdate: la validación real de que la posición
+// elegida existe y SÍ tiene un flujo de entrevistas configurado es
+// idéntica en los dos casos -- solo cambia lo que ocurre ANTES de llegar
+// aquí (alta nueva vs edición con una candidatura ya existente, ver cada
+// función más abajo). `jscpd` señalaba este bloque como clon literal.
+const requireInterviewFlowConfigured = async (positionId: number, companyId: number) => {
+    const firstStep = await getFirstInterviewStepForPosition(positionId, companyId);
+    if (firstStep === undefined) {
+        throw new Error('Selected position not found');
+    }
+    if (firstStep === null) {
+        throw new Error('The selected position does not have an interview process configured');
+    }
+    return firstStep;
+};
+
 // Elegir posición es opcional: un candidato puede registrarse sin
 // candidatura todavía y quedar "sin asignar" (ver
 // getUnassignedCandidatesService más abajo) -- eso es un estado válido, no
@@ -21,36 +38,42 @@ const prisma = new PrismaClient();
 // datos, sin ninguna Application, ocupando su email para siempre.
 const resolveFirstStepForNewApplication = async (positionId: number | undefined, companyId: number) => {
     if (!positionId) return null;
-
-    const firstStep = await getFirstInterviewStepForPosition(positionId, companyId);
-    if (firstStep === undefined) {
-        throw new Error('Selected position not found');
-    }
-    if (firstStep === null) {
-        throw new Error('The selected position does not have an interview process configured');
-    }
-    return firstStep;
+    return requireInterviewFlowConfigured(positionId, companyId);
 };
 
-const saveCandidateEducations = async (candidate: Candidate, candidateId: number, educations: any[] | undefined) => {
-    if (!educations) return;
-    for (const education of educations) {
-        const educationModel = new Education(education);
-        educationModel.candidateId = candidateId;
-        await educationModel.save();
-        candidate.educations.push(educationModel);
+// saveCandidateEducations/saveCandidateWorkExperiences (y sus equivalentes
+// "sustituir" para la edición, replaceCandidateEducations/
+// replaceCandidateWorkExperiences más abajo) comparten la misma forma:
+// crear una entrada por cada elemento de la lista, asignarle el id del
+// candidato y guardarla. Solo difieren en el modelo de dominio
+// (Education/WorkExperience) y en qué hacer con cada entrada ya guardada
+// -- addCandidate necesita empujarla al array en memoria del candidato
+// recién creado (para que la respuesta incluya las entradas ya guardadas),
+// updateCandidateProfile no. Un único helper genérico, parametrizado por
+// el constructor del modelo y un callback opcional, cubre los cuatro
+// casos sin fingir que "guardar nuevas" y "sustituir existentes" son la
+// misma operación -- lo que cambia entre ellas queda explícito en cada
+// llamada, no oculto dentro del helper.
+const saveEntries = async <T extends { candidateId?: number; save: () => Promise<unknown> }>(
+    ModelClass: new (data: any) => T,
+    candidateId: number,
+    entries: any[] | undefined,
+    onSaved?: (model: T) => void,
+) => {
+    if (!entries) return;
+    for (const entry of entries) {
+        const model = new ModelClass(entry);
+        model.candidateId = candidateId;
+        await model.save();
+        onSaved?.(model);
     }
 };
 
-const saveCandidateWorkExperiences = async (candidate: Candidate, candidateId: number, workExperiences: any[] | undefined) => {
-    if (!workExperiences) return;
-    for (const experience of workExperiences) {
-        const experienceModel = new WorkExperience(experience);
-        experienceModel.candidateId = candidateId;
-        await experienceModel.save();
-        candidate.workExperiences.push(experienceModel);
-    }
-};
+const saveCandidateEducations = (candidate: Candidate, candidateId: number, educations: any[] | undefined) =>
+    saveEntries(Education, candidateId, educations, (model) => candidate.educations.push(model));
+
+const saveCandidateWorkExperiences = (candidate: Candidate, candidateId: number, workExperiences: any[] | undefined) =>
+    saveEntries(WorkExperience, candidateId, workExperiences, (model) => candidate.workExperiences.push(model));
 
 const saveCandidateResume = async (candidate: Candidate, candidateId: number, cv: any) => {
     if (!cv || Object.keys(cv).length === 0) return;
@@ -144,14 +167,7 @@ const resolveFirstStepForProfileUpdate = async (
         return null;
     }
 
-    const firstStep = await getFirstInterviewStepForPosition(positionId, companyId);
-    if (firstStep === undefined) {
-        throw new Error('Selected position not found');
-    }
-    if (firstStep === null) {
-        throw new Error('The selected position does not have an interview process configured');
-    }
-    return firstStep;
+    return requireInterviewFlowConfigured(positionId, companyId);
 };
 
 // Las listas de educación/experiencia se sustituyen enteras por lo que
@@ -161,22 +177,12 @@ const resolveFirstStepForProfileUpdate = async (
 // entrada, solo su contenido).
 const replaceCandidateEducations = async (candidateId: number, educations: any[] | undefined) => {
     await prisma.education.deleteMany({ where: { candidateId } });
-    if (!educations) return;
-    for (const education of educations) {
-        const educationModel = new Education(education);
-        educationModel.candidateId = candidateId;
-        await educationModel.save();
-    }
+    await saveEntries(Education, candidateId, educations);
 };
 
 const replaceCandidateWorkExperiences = async (candidateId: number, workExperiences: any[] | undefined) => {
     await prisma.workExperience.deleteMany({ where: { candidateId } });
-    if (!workExperiences) return;
-    for (const experience of workExperiences) {
-        const experienceModel = new WorkExperience(experience);
-        experienceModel.candidateId = candidateId;
-        await experienceModel.save();
-    }
+    await saveEntries(WorkExperience, candidateId, workExperiences);
 };
 
 // Edita un candidato ya existente: datos personales, educación y
