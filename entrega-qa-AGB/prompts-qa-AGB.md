@@ -607,3 +607,21 @@ resume el bug de idioma corregido, la menos duplicación en
 y el `merge` que cerró la divergencia de historia -- sin inflar la
 descripción, solo lo justo para que quien revise sepa que existe y
 dónde mirar el detalle completo.
+
+**Un obstáculo real al intentar abrir el PR**: GitHub lo rechazó --
+"no history in common" -- tanto por `gh pr create` como por la propia
+API REST. Consecuencia directa de haber forzado `main` de este fork a
+la entrega del primer ejercicio hace tiempo (sección 5): ese `main`
+nunca compartió historia con la plantilla real de
+`LIDR-academy/AI4Devs-qa-202606-senior-2`, y GitHub exige un ancestro
+común para crear un PR. Comprobado también que la propia plantilla
+(`upstream/main`, recién añadida como remoto) sigue siendo la app
+original del bootcamp (JS, sin TypeScript en el frontend, sin
+autenticación...) -- confirma otra vez por qué se decidió divergir en
+vez de partir de ahí.
+
+**Arreglo**: `git merge -s ours --allow-unrelated-histories
+upstream/main` -- une el historial (para que GitHub acepte el PR) sin
+traer ni un byte de contenido de la plantilla; confirmado con
+`git diff --stat` contra el commit anterior: ninguna diferencia. `tsc`
+sigue limpio después.
