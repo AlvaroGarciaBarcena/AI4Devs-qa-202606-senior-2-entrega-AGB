@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Row, Col, Button, FormControl } from 'react-bootstrap';
 import { Trash } from 'react-bootstrap-icons';
 import ReactDatePickerModule from 'react-datepicker';
@@ -34,6 +34,41 @@ const DatePicker = ReactDatePickerModule.default || ReactDatePickerModule;
 const EMPTY_EDUCATION = { institution: '', title: '', startDate: '', endDate: '' };
 const EMPTY_WORK_EXPERIENCE = { company: '', position: '', description: '', startDate: '', endDate: '' };
 
+// Las entradas de educación/experiencia no traen ningún id propio (ver
+// candidateFromExisting en AddCandidateForm.jsx: se quita a propósito al
+// cargar un candidato existente, para no arrastrar el id de la BD en un
+// formulario que sustituye la lista entera al guardar). Sin una clave
+// estable, usar el índice como `key` de React reutiliza el nodo DOM
+// equivocado al quitar una entrada que no sea la última -- el DatePicker
+// siguiente hereda el estado interno (abierto/foco) del que ocupaba antes
+// esa posición. Este hook genera una clave local por entrada, ajena a los
+// datos del formulario (nunca se manda al padre): se deriva durante el
+// propio render (patrón "ajustar estado al cambiar una prop" de los docs
+// de React, con un ref en vez de useState -- no hace falta un
+// re-render aparte solo para esto), y se regenera entera cuando la lista
+// cambia de longitud desde fuera (cargar un candidato existente, o el
+// reseteo a vacío tras guardar). Añadir/quitar una entrada actualiza el
+// ref directamente en el mismo evento que ya dispara su propio re-render
+// (vía onEducationsChange/onWorkExperiencesChange), así que no hace falta
+// nada más para que se refleje.
+const useEntryKeys = (list) => {
+    const nextId = useRef(0);
+    const keysRef = useRef(null);
+
+    if (keysRef.current === null || keysRef.current.length !== list.length) {
+        keysRef.current = list.map(() => nextId.current++);
+    }
+
+    const addKey = () => {
+        keysRef.current = [...keysRef.current, nextId.current++];
+    };
+    const removeKeyAt = (index) => {
+        keysRef.current = keysRef.current.filter((_key, keyIndex) => keyIndex !== index);
+    };
+
+    return [keysRef.current, addKey, removeKeyAt];
+};
+
 const WorkHistoryFields = ({
     educations,
     workExperiences,
@@ -42,8 +77,14 @@ const WorkHistoryFields = ({
     onFieldChanged,
     labels,
 }) => {
+    const [educationKeys, addEducationKey, removeEducationKeyAt] = useEntryKeys(educations);
+    const [workExperienceKeys, addWorkExperienceKey, removeWorkExperienceKeyAt] = useEntryKeys(workExperiences);
+
     const listFor = (section) => (section === 'educations' ? educations : workExperiences);
     const setListFor = (section) => (section === 'educations' ? onEducationsChange : onWorkExperiencesChange);
+    const keysFor = (section) => (section === 'educations' ? educationKeys : workExperienceKeys);
+    const addKeyFor = (section) => (section === 'educations' ? addEducationKey : addWorkExperienceKey);
+    const removeKeyAtFor = (section) => (section === 'educations' ? removeEducationKeyAt : removeWorkExperienceKeyAt);
 
     const handleInputChange = (e, index, section) => {
         const updated = [...listFor(section)];
@@ -66,12 +107,14 @@ const WorkHistoryFields = ({
     const handleAddSection = (section) => {
         const newEntry = section === 'educations' ? EMPTY_EDUCATION : EMPTY_WORK_EXPERIENCE;
         setListFor(section)([...listFor(section), { ...newEntry }]);
+        addKeyFor(section)();
     };
 
     const handleRemoveSection = (index, section) => {
         const updated = [...listFor(section)];
         updated.splice(index, 1);
         setListFor(section)(updated);
+        removeKeyAtFor(section)(index);
     };
 
     return (
@@ -80,7 +123,7 @@ const WorkHistoryFields = ({
                 <Button onClick={() => handleAddSection('educations')} className="btn btn-primary btn-sm mr-2">{labels.addEducation}</Button>
             </Row>
             {educations.map((education, index) => (
-                <div key={index} className="mb-3">
+                <div key={educationKeys[index]} className="mb-3">
                     <Row className="mt-4">
                         <Col md={6}>
                             <FormControl
@@ -132,7 +175,7 @@ const WorkHistoryFields = ({
                 <Button onClick={() => handleAddSection('workExperiences')} className="btn btn-primary btn-sm mr-2">{labels.addWorkExperience}</Button>
             </Row>
             {workExperiences.map((experience, index) => (
-                <div key={index} className="mb-3">
+                <div key={workExperienceKeys[index]} className="mb-3">
                     <Row className="mt-4">
                         <Col md={6}>
                             <FormControl

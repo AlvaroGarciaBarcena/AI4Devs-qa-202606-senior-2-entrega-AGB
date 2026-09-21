@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useState } from 'react';
+import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import * as authService from '../services/authService';
 
 const AuthContext = createContext(null);
@@ -20,8 +20,15 @@ export const AuthProvider = ({ children }) => {
         setEmployee(null);
     }, []);
 
+    // login/logout ya son estables (useCallback, sin dependencias) -- solo
+    // `employee` puede cambiar. Sin useMemo, este objeto se recreaba en
+    // cada render de AuthProvider (p. ej. al re-renderizar por cualquier
+    // cambio en `children`), y todo consumidor de useContext(AuthContext)
+    // se re-renderizaba con él aunque `employee` no hubiera cambiado.
+    const value = useMemo(() => ({ employee, login, logout }), [employee, login, logout]);
+
     return (
-        <AuthContext.Provider value={{ employee, login, logout }}>
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     );

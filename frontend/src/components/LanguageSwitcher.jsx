@@ -11,8 +11,23 @@ const LanguageSwitcher = () => {
     const { t, i18n } = useTranslation();
 
     return (
-        <div role="group" aria-label={t('languageSwitcher.label')} className="d-flex align-items-center">
-            <span className="me-2 small text-muted">{t('languageSwitcher.label')}</span>
+        // <fieldset>/<legend> en vez de role="group" + aria-label sobre un
+        // <div> -- SonarCloud (accesibilidad) señala que un rol ARIA
+        // "group" no llega igual de bien a todos los lectores de pantalla
+        // como el elemento nativo pensado justo para esto. Los estilos en
+        // línea deshacen la apariencia por defecto de <fieldset>/<legend>
+        // (borde, relleno, tipografía de título) para que se vea igual que
+        // antes.
+        <fieldset
+            className="d-flex align-items-center"
+            style={{ border: 0, padding: 0, margin: 0 }}
+        >
+            <legend
+                className="me-2 small text-muted mb-0"
+                style={{ display: 'inline', width: 'auto', fontSize: 'inherit', border: 0, padding: 0, float: 'none' }}
+            >
+                {t('languageSwitcher.label')}
+            </legend>
             {LOCALE_OPTIONS.map(({ code, label }) => (
                 <Button
                     key={code}
@@ -27,7 +42,7 @@ const LanguageSwitcher = () => {
                     {label}
                 </Button>
             ))}
-        </div>
+        </fieldset>
     );
 };
 

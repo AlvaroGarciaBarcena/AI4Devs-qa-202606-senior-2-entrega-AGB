@@ -54,7 +54,7 @@ export const getCandidatesByPositionService = async (positionId: number, company
     // propósito: ese catch envuelve cualquier error en uno genérico, y
     // este mensaje concreto sí importa distinguirlo (lo usa el controlador
     // para responder 404 en vez de 500).
-    if (!position || position.companyId !== companyId) {
+    if (position?.companyId !== companyId) {
         throw new Error('Position not found');
     }
 
@@ -108,7 +108,7 @@ export const getFirstInterviewStepForPosition = async (positionId: number, compa
     // Una posición de otra empresa se trata igual que una inexistente --
     // quien llama (candidateService.ts) ya distingue undefined/null, no
     // hace falta un tercer caso.
-    if (!position || position.companyId !== companyId) return undefined;
+    if (position?.companyId !== companyId) return undefined;
     return position.interviewFlow.interviewSteps[0] ?? null;
 };
 
@@ -124,7 +124,7 @@ export const getInterviewFlowByPositionService = async (positionId: number, comp
         }
     });
 
-    if (!positionWithInterviewFlow || positionWithInterviewFlow.companyId !== companyId) {
+    if (positionWithInterviewFlow?.companyId !== companyId) {
         throw new Error('Position not found');
     }
 
@@ -163,7 +163,7 @@ export const addInterviewStepService = async (positionId: number, name: string, 
         }
     });
 
-    if (!position || position.companyId !== companyId) {
+    if (position?.companyId !== companyId) {
         throw new Error('Position not found');
     }
 

@@ -8,8 +8,8 @@ const MAX_STEP_NAME_LENGTH = 100;
 // deliberada de este código (así lo esperan sus tests), no algo a unificar
 // aquí de paso.
 const parsePositionId = (req: Request, res: Response, errorKey: 'message' | 'error'): number | null => {
-    const positionId = parseInt(req.params.id);
-    if (isNaN(positionId)) {
+    const positionId = Number.parseInt(req.params.id);
+    if (Number.isNaN(positionId)) {
         res.status(400).json({ [errorKey]: 'Invalid position ID format' });
         return null;
     }

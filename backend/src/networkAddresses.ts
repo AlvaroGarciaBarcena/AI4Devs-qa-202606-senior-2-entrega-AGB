@@ -1,4 +1,4 @@
-import os from 'os';
+import os from 'node:os';
 
 // Antes, index.ts imprimía siempre "Server is running at
 // http://localhost:PORT" a fuego, aunque el servidor escucha en TODAS las

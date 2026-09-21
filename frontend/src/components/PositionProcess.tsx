@@ -41,7 +41,8 @@ const toTestId = (value: string) =>
         .replace(/[̀-ͯ]/g, '')
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
+        .replace(/^-+/, '')
+        .replace(/-+$/, '');
 
 const PositionProcess: React.FC = () => {
     const { t } = useTranslation();

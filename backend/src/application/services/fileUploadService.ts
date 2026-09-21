@@ -1,7 +1,7 @@
 import multer from 'multer';
 import { Request, Response } from 'express';
-import path from 'path';
-import fs from 'fs';
+import path from 'node:path';
+import fs from 'node:fs';
 
 // El Content-Type de multer/fileFilter lo declara quien sube el fichero --no
 // es de fiar-- así que la lista real de tipos permitidos vive aquí, para

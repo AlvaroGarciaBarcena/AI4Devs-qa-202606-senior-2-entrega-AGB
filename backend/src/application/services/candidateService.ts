@@ -10,67 +10,69 @@ import { getFirstInterviewStepForPosition } from './positionService';
 
 const prisma = new PrismaClient();
 
+// Elegir posición es opcional: un candidato puede registrarse sin
+// candidatura todavía y quedar "sin asignar" (ver
+// getUnassignedCandidatesService más abajo) -- eso es un estado válido, no
+// un huérfano accidental. Lo que sigue siendo un error es indicar una
+// posición que no existe, o que existe pero no tiene ningún flujo de
+// entrevistas configurado. Se valida ANTES de guardar nada del candidato:
+// antes esta comprobación vivía al final, y un alta contra una posición sin
+// fases configuradas dejaba un candidato huérfano ya guardado en la base de
+// datos, sin ninguna Application, ocupando su email para siempre.
+const resolveFirstStepForNewApplication = async (positionId: number | undefined, companyId: number) => {
+    if (!positionId) return null;
+
+    const firstStep = await getFirstInterviewStepForPosition(positionId, companyId);
+    if (firstStep === undefined) {
+        throw new Error('Selected position not found');
+    }
+    if (firstStep === null) {
+        throw new Error('The selected position does not have an interview process configured');
+    }
+    return firstStep;
+};
+
+const saveCandidateEducations = async (candidate: Candidate, candidateId: number, educations: any[] | undefined) => {
+    if (!educations) return;
+    for (const education of educations) {
+        const educationModel = new Education(education);
+        educationModel.candidateId = candidateId;
+        await educationModel.save();
+        candidate.educations.push(educationModel);
+    }
+};
+
+const saveCandidateWorkExperiences = async (candidate: Candidate, candidateId: number, workExperiences: any[] | undefined) => {
+    if (!workExperiences) return;
+    for (const experience of workExperiences) {
+        const experienceModel = new WorkExperience(experience);
+        experienceModel.candidateId = candidateId;
+        await experienceModel.save();
+        candidate.workExperiences.push(experienceModel);
+    }
+};
+
+const saveCandidateResume = async (candidate: Candidate, candidateId: number, cv: any) => {
+    if (!cv || Object.keys(cv).length === 0) return;
+    const resumeModel = new Resume(cv);
+    resumeModel.candidateId = candidateId;
+    await resumeModel.save();
+    candidate.resumes.push(resumeModel);
+};
+
 export const addCandidate = async (candidateData: any, companyId: number) => {
     validateCandidateData(candidateData); // Validar los datos del candidato (lanza su propio Error con mensaje claro si falla)
 
-    // Elegir posición es opcional: un candidato puede registrarse sin
-    // candidatura todavía y quedar "sin asignar" (ver
-    // getUnassignedCandidatesService más abajo) -- eso es un estado válido,
-    // no un huérfano accidental. Lo que sigue siendo un error es indicar
-    // una posición que no existe, o que existe pero no tiene ningún flujo
-    // de entrevistas configurado.
-    //
-    // Cuando SÍ se indica, se valida ANTES de guardar nada del candidato.
-    // Antes esta comprobación vivía al final, después de guardar candidato,
-    // educación, experiencia y CV: un alta con una posición inexistente o
-    // sin fases configuradas fallaba con 400 igualmente, pero dejaba un
-    // candidato huérfano ya guardado en la base de datos, sin ninguna
-    // Application, ocupando su email para siempre (confirmado con PoC:
-    // POST /candidates contra una posición sin fases devuelve 400, y el
-    // candidato aparece igualmente en la tabla Candidate).
-    let firstStep = null;
-    if (candidateData.positionId) {
-        firstStep = await getFirstInterviewStepForPosition(candidateData.positionId, companyId);
-        if (firstStep === undefined) {
-            throw new Error('Selected position not found');
-        }
-        if (firstStep === null) {
-            throw new Error('The selected position does not have an interview process configured');
-        }
-    }
+    const firstStep = await resolveFirstStepForNewApplication(candidateData.positionId, companyId);
 
     const candidate = new Candidate(candidateData); // Crear una instancia del modelo Candidate
     try {
         const savedCandidate = await candidate.save(); // Guardar el candidato en la base de datos
         const candidateId = savedCandidate.id; // Obtener el ID del candidato guardado
 
-        // Guardar la educación del candidato
-        if (candidateData.educations) {
-            for (const education of candidateData.educations) {
-                const educationModel = new Education(education);
-                educationModel.candidateId = candidateId;
-                await educationModel.save();
-                candidate.educations.push(educationModel);
-            }
-        }
-
-        // Guardar la experiencia laboral del candidato
-        if (candidateData.workExperiences) {
-            for (const experience of candidateData.workExperiences) {
-                const experienceModel = new WorkExperience(experience);
-                experienceModel.candidateId = candidateId;
-                await experienceModel.save();
-                candidate.workExperiences.push(experienceModel);
-            }
-        }
-
-        // Guardar los archivos de CV
-        if (candidateData.cv && Object.keys(candidateData.cv).length > 0) {
-            const resumeModel = new Resume(candidateData.cv);
-            resumeModel.candidateId = candidateId;
-            await resumeModel.save();
-            candidate.resumes.push(resumeModel);
-        }
+        await saveCandidateEducations(candidate, candidateId, candidateData.educations);
+        await saveCandidateWorkExperiences(candidate, candidateId, candidateData.workExperiences);
+        await saveCandidateResume(candidate, candidateId, candidateData.cv);
 
         // Crear la candidatura a la posición elegida, en la primera fase de
         // su flujo de entrevistas -- sin esto, el candidato quedaba
@@ -121,16 +123,65 @@ export const getUnassignedCandidatesService = async () => {
     }));
 };
 
+// A propósito NO permite cambiar o quitar una posición ya asignada --
+// Interview.applicationId es RESTRICT (ver schema.prisma), así que borrar
+// la Application de un candidato con entrevistas ya registradas fallaría a
+// medio camino, dejando el candidato en un estado a medio actualizar.
+// Reasignar posición con historial de entrevistas de por medio es una
+// decisión de producto mayor (¿qué pasa con esas entrevistas?) que esta
+// edición no intenta resolver.
+const resolveFirstStepForProfileUpdate = async (
+    positionId: number | undefined,
+    existingApplicationPositionId: number | undefined,
+    companyId: number,
+) => {
+    if (!positionId) return null;
+
+    if (existingApplicationPositionId !== undefined) {
+        if (positionId !== existingApplicationPositionId) {
+            throw new Error('Cannot change the position of a candidate that already has an application');
+        }
+        return null;
+    }
+
+    const firstStep = await getFirstInterviewStepForPosition(positionId, companyId);
+    if (firstStep === undefined) {
+        throw new Error('Selected position not found');
+    }
+    if (firstStep === null) {
+        throw new Error('The selected position does not have an interview process configured');
+    }
+    return firstStep;
+};
+
+// Las listas de educación/experiencia se sustituyen enteras por lo que
+// llega en el formulario -- más simple y predecible que intentar adivinar
+// cuáles de las entradas anteriores siguen siendo "la misma" para
+// actualizarlas en vez de recrearlas (el formulario no manda ningún id de
+// entrada, solo su contenido).
+const replaceCandidateEducations = async (candidateId: number, educations: any[] | undefined) => {
+    await prisma.education.deleteMany({ where: { candidateId } });
+    if (!educations) return;
+    for (const education of educations) {
+        const educationModel = new Education(education);
+        educationModel.candidateId = candidateId;
+        await educationModel.save();
+    }
+};
+
+const replaceCandidateWorkExperiences = async (candidateId: number, workExperiences: any[] | undefined) => {
+    await prisma.workExperience.deleteMany({ where: { candidateId } });
+    if (!workExperiences) return;
+    for (const experience of workExperiences) {
+        const experienceModel = new WorkExperience(experience);
+        experienceModel.candidateId = candidateId;
+        await experienceModel.save();
+    }
+};
+
 // Edita un candidato ya existente: datos personales, educación y
 // experiencia laboral, y opcionalmente asignarle una posición si todavía
-// no tenía ninguna. A propósito NO permite cambiar o quitar una posición
-// ya asignada -- Interview.applicationId es RESTRICT (ver
-// schema.prisma), así que borrar la Application de un candidato con
-// entrevistas ya registradas fallaría a medio camino, dejando el
-// candidato en un estado a medio actualizar. Reasignar posición con
-// historial de entrevistas de por medio es una decisión de producto
-// mayor (¿qué pasa con esas entrevistas?) que esta edición no intenta
-// resolver.
+// no tenía ninguna.
 export const updateCandidateProfile = async (id: number, candidateData: any, companyId: number) => {
     validateCandidateData(candidateData);
 
@@ -139,23 +190,11 @@ export const updateCandidateProfile = async (id: number, candidateData: any, com
         throw new Error('Candidate not found');
     }
 
-    const hasExistingApplication = existing.applications.length > 0;
-    let firstStep = null;
-    if (candidateData.positionId) {
-        if (hasExistingApplication) {
-            if (candidateData.positionId !== existing.applications[0].positionId) {
-                throw new Error('Cannot change the position of a candidate that already has an application');
-            }
-        } else {
-            firstStep = await getFirstInterviewStepForPosition(candidateData.positionId, companyId);
-            if (firstStep === undefined) {
-                throw new Error('Selected position not found');
-            }
-            if (firstStep === null) {
-                throw new Error('The selected position does not have an interview process configured');
-            }
-        }
-    }
+    const firstStep = await resolveFirstStepForProfileUpdate(
+        candidateData.positionId,
+        existing.applications[0]?.positionId,
+        companyId,
+    );
 
     try {
         await prisma.candidate.update({
@@ -169,28 +208,8 @@ export const updateCandidateProfile = async (id: number, candidateData: any, com
             },
         });
 
-        // Las listas de educación/experiencia se sustituyen enteras por lo
-        // que llega en el formulario -- más simple y predecible que
-        // intentar adivinar cuáles de las entradas anteriores siguen
-        // siendo "la misma" para actualizarlas en vez de recrearlas (el
-        // formulario no manda ningún id de entrada, solo su contenido).
-        await prisma.education.deleteMany({ where: { candidateId: id } });
-        if (candidateData.educations) {
-            for (const education of candidateData.educations) {
-                const educationModel = new Education(education);
-                educationModel.candidateId = id;
-                await educationModel.save();
-            }
-        }
-
-        await prisma.workExperience.deleteMany({ where: { candidateId: id } });
-        if (candidateData.workExperiences) {
-            for (const experience of candidateData.workExperiences) {
-                const experienceModel = new WorkExperience(experience);
-                experienceModel.candidateId = id;
-                await experienceModel.save();
-            }
-        }
+        await replaceCandidateEducations(id, candidateData.educations);
+        await replaceCandidateWorkExperiences(id, candidateData.workExperiences);
 
         if (firstStep) {
             const applicationModel = new Application({
@@ -263,7 +282,7 @@ export const updateCandidateStage = async (
         where: { id: application.positionId },
         include: { interviewFlow: { include: { interviewSteps: true } } },
     });
-    if (!position || position.companyId !== companyId) {
+    if (position?.companyId !== companyId) {
         throw new Error('Application not found');
     }
 

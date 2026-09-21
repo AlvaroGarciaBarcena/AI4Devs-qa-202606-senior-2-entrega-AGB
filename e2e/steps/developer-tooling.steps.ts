@@ -90,7 +90,7 @@ Then('el servidor de desarrollo arranca sobre Vite en menos de un segundo', asyn
       // rompiendo una búsqueda ingenua del número.
       // eslint-disable-next-line no-control-regex
       const plainOutput = output.replace(/\x1b\[[0-9;]*m/g, '');
-      const match = plainOutput.match(/ready in (\d+) ?ms/);
+      const match = /ready in (\d+) ?ms/.exec(plainOutput);
       if (match) {
         clearTimeout(timeout);
         resolve(Number(match[1]));

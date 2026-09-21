@@ -9,6 +9,14 @@ const BACKEND_URL = process.env.E2E_BACKEND_URL ?? 'http://localhost:3010';
 
 type HealthResponse = { git: { commit: string; branch: string } | null };
 
+// SonarCloud (typescript:S4036, "Make sure the PATH variable only
+// contains fixed, unwriteable directories") -- mismo caso que
+// backend/src/gitInfo.ts: git no tiene un equivalente al npm_execpath que
+// resuelve e2e/steps/support/npmChildProcess.ts sin buscar en PATH, así
+// que se restringe el PATH del proceso hijo a las rutas de sistema
+// habituales en vez de heredar el PATH completo del proceso.
+const TRUSTED_PATH = '/usr/bin:/bin:/usr/local/bin';
+
 // Hallazgo real (prompts-AGB.md, sección 3.65): más de una vez, el
 // backend que respondía en el puerto esperado resultó ser el de otro
 // repo/rama -- mismo puerto, mismo aspecto, código distinto, sin
@@ -17,7 +25,10 @@ type HealthResponse = { git: { commit: string; branch: string } | null };
 // de tocar nada más, para fallar aquí, con un mensaje claro, en vez de
 // dejar que fallen escenarios sueltos difíciles de explicar.
 const verifyBackendCommit = async () => {
-  const localCommit = execSync('git rev-parse HEAD', { encoding: 'utf-8' }).trim();
+  const localCommit = execSync('git rev-parse HEAD', {
+    encoding: 'utf-8',
+    env: { ...process.env, PATH: TRUSTED_PATH },
+  }).trim();
 
   let health: HealthResponse;
   try {
