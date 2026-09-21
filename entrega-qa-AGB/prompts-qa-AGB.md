@@ -584,3 +584,26 @@ real -- ningún otro fichero cambió de contenido. `tsc` limpio y 95/95
 tests unitarios siguen en verde. Confirmado con
 `git merge-base --is-ancestor origin/main HEAD` que ahora sí es una
 relación de antepasado real, no solo contenido coincidente.
+
+## 15. Cierre: evidencia regenerada, descripción del PR actualizada, y apertura del PR real
+
+Repaso final del checklist de entrega a petición del usuario -- todo
+hecho salvo el propio PR, nunca abierto hasta ahora (comprobado con
+`gh pr list` contra el fork y contra el repo real, ninguno de los dos
+tenía nada).
+
+**Evidencia de ejecución, regenerada contra el commit final**: los
+servidores que corrían eran los del repo de origen, no los de este
+clon -- parados y arrancados de nuevo desde aquí (el log de arranque
+con el commit/rama, sección 13, lo confirmó al momento: `commit
+f3fd8fb (rama qa-e2e-position-AGB)`). `position.spec.ts` ejecutado dos
+veces seguidas (2/2 ambas) contra el commit real que lleva este PR, no
+contra uno de hace horas.
+
+**`PR-DESCRIPTION-QA.md` actualizada** con una sección nueva
+("Robustez, traída del repo hermano una vez verificada allí") que
+resume el bug de idioma corregido, la menos duplicación en
+`positionController.ts`, `GET /health` + el hook de `global-setup.ts`,
+y el `merge` que cerró la divergencia de historia -- sin inflar la
+descripción, solo lo justo para que quien revise sepa que existe y
+dónde mirar el detalle completo.

@@ -40,6 +40,12 @@ En vez de tocarla, este PR añade una configuración y una suite **nuevas e inde
 - **`entrega-qa-AGB/`** (nuevo): diario de trabajo (`prompts-qa-AGB.md`) y ramas (`BRANCHES_LOG-qa`) de este ejercicio en concreto, más esta misma descripción de PR (`PR-DESCRIPTION-QA.md`).
 - **`README.md`**: aviso breve al principio señalando las dos carpetas de arriba.
 
+**Robustez, traída del repo hermano una vez verificada allí:**
+- Corregido un bug real (no solo deriva de datos) en tres escenarios de la suite heredada (`e2e/steps/hiring-pipeline.steps.ts`, `candidate-editing.steps.ts`, `candidate-intake.steps.ts`): buscaban la columna de fase por su encabezado en inglés, que nunca coincide con la interfaz en español.
+- Menos duplicación de código en `backend/src/presentation/controllers/positionController.ts` y su test (verificado con `jscpd`, sin cambio de comportamiento).
+- **`GET /health`** (`backend/src/gitInfo.ts` + `index.ts`) + comprobación automática en `e2e/global-setup.ts`: si el backend en marcha no es el commit de este mismo repo, la suite falla pronto con un mensaje explícito en vez de escenarios sueltos difíciles de explicar — nacido de un incidente real durante la propia construcción de este PR (ver `entrega-qa-AGB/prompts-qa-AGB.md`, secciones 12-13).
+- `git merge origin/main`: las dos ramas del fork habían divergido en su historia (mismo contenido, copiado a mano en vez de fusionado) — cerrado con un merge real, sin cambio de contenido salvo dos frases de los README (sección 14 del mismo diario).
+
 ## Cómo ejecutar las pruebas
 
 Backend y frontend deben estar arrancados en local antes (este `playwright.config.ts` no los levanta él mismo):
@@ -58,7 +64,7 @@ npx playwright install
 npx playwright test
 ```
 
-Resultado esperado: `2 passed`. Salida real guardada en [`/prompts/evidencia-ejecucion-AGB.txt`](../prompts/evidencia-ejecucion-AGB.txt).
+Resultado esperado: `2 passed`. Salida real guardada en [`/prompts/evidencia-ejecucion-AGB.txt`](../prompts/evidencia-ejecucion-AGB.txt) — regenerada contra el commit final de este PR, ejecutada dos veces seguidas.
 
 ## Herramientas de IA utilizadas
 
