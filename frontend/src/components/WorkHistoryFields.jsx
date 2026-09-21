@@ -82,7 +82,6 @@ const WorkHistoryFields = ({
 
     const listFor = (section) => (section === 'educations' ? educations : workExperiences);
     const setListFor = (section) => (section === 'educations' ? onEducationsChange : onWorkExperiencesChange);
-    const keysFor = (section) => (section === 'educations' ? educationKeys : workExperienceKeys);
     const addKeyFor = (section) => (section === 'educations' ? addEducationKey : addWorkExperienceKey);
     const removeKeyAtFor = (section) => (section === 'educations' ? removeEducationKeyAt : removeWorkExperienceKeyAt);
 

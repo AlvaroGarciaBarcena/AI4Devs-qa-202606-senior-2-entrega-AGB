@@ -7,8 +7,8 @@ describe('getGitInfo', () => {
             .mockReturnValueOnce('mi-rama-AGB');
 
         expect(getGitInfo(exec)).toEqual({ commit: 'abc1234567890', branch: 'mi-rama-AGB' });
-        expect(exec).toHaveBeenCalledWith('git rev-parse HEAD');
-        expect(exec).toHaveBeenCalledWith('git rev-parse --abbrev-ref HEAD');
+        expect(exec).toHaveBeenCalledWith(['rev-parse', 'HEAD']);
+        expect(exec).toHaveBeenCalledWith(['rev-parse', '--abbrev-ref', 'HEAD']);
     });
 
     // Caso real que motivó esto: un despliegue (o un entorno) sin .git

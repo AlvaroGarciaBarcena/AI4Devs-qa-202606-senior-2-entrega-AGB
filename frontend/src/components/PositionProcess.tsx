@@ -35,14 +35,27 @@ type InterviewFlow = {
 // normalizan a un slug estable (sin tildes, en minúsculas, separado por
 // guiones) en vez de usar el id numérico de la fase, para que el selector
 // siga siendo legible en las pruebas E2E (ver /frontend/tests/e2e).
+// Sin regex para quitar los guiones sobrantes de los extremos (SonarCloud
+// seguía señalando `/-+$/` como potencialmente superlineal incluso ya
+// separado de `/^-+/` y sin alternancia) -- un guion es un único carácter
+// fijo, recorrer los extremos a mano es igual de simple y no deja ninguna
+// duda al respecto.
+const trimDashes = (value: string) => {
+    let start = 0;
+    let end = value.length;
+    while (value[start] === '-') start += 1;
+    while (end > start && value[end - 1] === '-') end -= 1;
+    return value.slice(start, end);
+};
+
 const toTestId = (value: string) =>
-    value
-        .normalize('NFD')
-        .replace(/[̀-ͯ]/g, '')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+/, '')
-        .replace(/-+$/, '');
+    trimDashes(
+        value
+            .normalize('NFD')
+            .replace(/[̀-ͯ]/g, '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-'),
+    );
 
 const PositionProcess: React.FC = () => {
     const { t } = useTranslation();
