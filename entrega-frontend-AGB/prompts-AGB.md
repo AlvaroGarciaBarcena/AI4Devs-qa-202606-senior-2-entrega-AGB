@@ -6617,3 +6617,282 @@ que exige ese repo, etc.), siguiendo el mismo patrón de siempre --
 antes de tocar código, se relee con atención el `README.md` de
 `AI4Devs-qa-202606-senior-2` para confirmar exactamente qué pide la
 entrega.
+
+## 3.64 Este mismo diario, movido a `entrega-frontend-AGB/`
+
+Trabajando ya en el segundo ejercicio (repo de QA, forkeado a partir
+de esta misma rama, ver sección 3.63), se detectó un problema real de
+claridad: al mezclar en la raíz del repo heredado los 7 ficheros
+puramente narrativos de esta entrega (`prompts-AGB.md` y sus tres
+satélites, `BRANCHES_LOG`, `JUSTIFICACION-ENTREGA.md`,
+`PROMPTS_POR_PR.md`) con lo específico del segundo ejercicio, quedaba
+confuso para cualquiera que no hubiera seguido el hilo desde el
+principio -- "que no seamos nosotros dos". La solución que se aplicó
+allí (una carpeta dedicada, `entrega-frontend-AGB/`, documentada en el
+propio repo de QA) se replica aquí, en el origen, para que el punto de
+partida real de esa segunda entrega ya sea el correcto -- no una copia
+reorganizada solo en el fork.
+
+**Cambios**: los 7 ficheros se mueven a `entrega-frontend-AGB/` (este
+mismo, incluido). `README-ES.md`/`README-EN.md` y los 12 ficheros de
+`docs/adr/` (11 ADR + su propio índice) se actualizan solo en los
+enlaces relativos que apuntaban a los ficheros movidos -- nada de
+código de la app se toca ni se mueve.
+
+**Verificación real, no solo revisión visual**: mismo script que en
+el repo de QA (`python3`, sin dependencias, recorre todo el repo
+comprobando que cada enlace markdown relativo resuelve a un fichero
+real, incluyendo ficheros sin extensión como `BRANCHES_LOG`) --
+primera pasada tras el movimiento: cero enlaces rotos, ya que aquí se
+arreglaron todas las rutas de una vez, con el mismo criterio ya
+probado en el repo de QA. `npx tsc --noEmit` y los tests unitarios
+(backend 93/93, frontend 119/119) siguen en verde -- confirmado que un
+movimiento de documentación pura no afecta a nada funcional.
+
+## 3.65 Un bug real en la suite de la raíz (no "deriva de datos"), corrección de un diagnóstico anterior, y dos fallos propios de verificación
+
+El usuario preguntó si, ya que la investigación del ejercicio de QA
+había producido un test (`position.spec.ts`) que consulta la API en
+vez de asumir la fase de un candidato, valía la pena traer esa misma
+mejora al repo de origen. Aclarado primero cuál de dos lecturas
+posibles era la correcta (vía pregunta al usuario): no copiar
+`position.spec.ts` en sí (es un entregable específico del ejercicio de
+QA, no de este), sino aplicar el mismo principio al test **ya
+existente** en `/e2e` que tenía el problema real,
+`hiring-pipeline.steps.ts`.
+
+**El hallazgo importante**: al investigar, la causa real del fallo
+intermitente de este escenario resultó ser otra, distinta de la que se
+diagnosticó (mal) en la sección 2 de `prompts-qa-AGB.md` del repo de
+QA ("no hay cuello de botella real, probablemente un pico puntual del
+entorno"). Confirmado con el volcado de accesibilidad de una ejecución
+real: el escenario buscaba la columna de fase por su encabezado en
+**inglés** (`getByRole('heading', { name: 'Initial Screening' })`),
+que nunca coincide con lo que renderiza la interfaz en **español**
+(`locale: 'es-ES'` del `playwright.config.ts` de la raíz --
+"Selección inicial", traducción real de
+`positionProcess.interviewStepNames` en `frontend/src/i18n/locales/
+es.json`). El candidato buscado SÍ estaba en la columna correcta; la
+columna en sí nunca se encontraba. Ese mismo patrón (`getByRole
+('heading', { name: 'Initial Screening'|'Technical Interview' })`)
+aparecía también, sin corregir hasta ahora, en
+`candidate-editing.steps.ts` y `candidate-intake.steps.ts` -- un
+`grep` a todo `e2e/steps/*.ts` confirmó que esos tres eran los únicos.
+
+**Arreglo, en los tres ficheros**: no se busca la columna por su
+encabezado traducido -- se comprueba contra la respuesta real de
+`GET /position/:id/candidates` (o, donde el nombre del candidato ya es
+de por sí único y fiable, directamente por ese nombre dentro de
+cualquier `.border.rounded`/`.card`, sin necesitar saber en qué
+columna concreta cae). En `hiring-pipeline.steps.ts` hizo falta un
+segundo ajuste: la base de datos de desarrollo compartida tiene
+candidatos de pruebas manuales con nombres repetidos ("Bad Position"
+x3, entre otros) -- comprobar cada candidato uno a uno por nombre
+resultó ambiguo de verdad (varias tarjetas con el mismo nombre y la
+misma puntuación). Se simplificó a comprobar, a nivel de datos, que
+sigue habiendo candidatos en más de una fase, y a nivel de UI, solo el
+único candidato fiable de esa posición: Carlos García.
+
+**Dos fallos propios durante la propia verificación, ambos
+documentados para no repetirlos**:
+1. Llevaba un rato verificando por accidente contra los servidores del
+   **clon de QA** (`AI4Devs-qa-202606-senior-2-entrega-AGB`), no los
+   de este repo -- nunca se cambiaron de vuelta tras crear ese clon
+   separado (sección 5 de `prompts-qa-AGB.md`, en el otro repo).
+   Corregido: parados esos servidores, arrancados los de este repo.
+2. Con los servidores correctos, el login seguía fallando de forma
+   intermitente. Comprobado con la Browser pane en vivo (no solo
+   `curl`): el formulario de login mostraba "No se pudo conectar con
+   el servidor" -- un error real de red, no del limitador de intentos
+   de login. Causa real: `frontend/.env` tenía
+   `VITE_API_URL=http://192.168.1.151:3010` (configurado hace tiempo
+   para probar el acceso desde otro equipo de la red local, sección
+   3.47/3.48), y esa IP concreta había agotado el límite general de
+   peticiones (300/15min) de tanto testear hoy -- mientras que
+   `localhost:3010` (lo que usaban todos mis `curl` de comprobación)
+   nunca estuvo bloqueado, por eso los chequeos directos siempre
+   funcionaban mientras el navegador fallaba. Corregido a
+   `http://localhost:3010` (uso normal, no hay ninguna prueba de red
+   local en marcha) y reiniciado Vite.
+
+Con el entorno corregido: 20/20 escenarios en verde, dos veces
+seguidas, en `hiring-pipeline.feature` + `candidate-editing.feature` +
+`candidate-intake.feature`. Huérfanos propios de esta sesión de
+depuración ("E2E FilaClicable" x2, de ejecuciones fallidas por el
+problema de servidores/`.env`) limpiados con el mismo script Prisma ya
+usado antes.
+
+**Además, en la misma rama**: el usuario pidió reducir la duplicación
+de código que `jscpd` detectaba en `candidate-intake.steps.ts` (10,3%
+con la configuración que él estaba mirando). Cinco escenarios repetían
+el mismo bloque -- rellenar nombre/apellido/email, elegir la posición
+sembrada, pulsar "Enviar" -- extraído a un único helper,
+`submitBasicCandidateForm`. `jscpd` (con `--min-lines 3 --min-tokens
+30`) pasó de 3 clones/4,76% a 0 clones/0,00% en este fichero.
+
+## 3.66 Menos duplicación en `positionController.ts`/`positionController.test.ts` (aprovechando la espera al limitador)
+
+Mientras se esperaba a que el limitador general de peticiones (sección
+3.65) se liberara para la verificación final en vivo, el usuario pidió
+aplicar el mismo criterio de la sección anterior a
+`backend/src/presentation/controllers/positionController.ts` (23,6%
+de duplicación según su herramienta) y su fichero de test (13,7%).
+
+**`positionController.ts`**: los cuatro controladores repetían dos
+patrones completos --
+1. `parseInt(req.params.id)` + comprobación `isNaN` + `400` si no es
+   numérico (tres veces, con una diferencia real que no se toca:
+   `getCandidatesByPosition`/`getInterviewFlowByPosition` devuelven
+   `{ message: ... }`, `addInterviewStep` devuelve `{ error: ... }` --
+   así lo esperan sus propios tests, no es un descuido a unificar).
+2. El `catch`: mensaje `"Position not found"` del servicio -> 404,
+   cualquier otro error -> 500 con un mensaje propio de cada endpoint
+   (`getCandidatesByPosition` y `addInterviewStep`, patrón idéntico).
+   `getInterviewFlowByPosition` NO sigue este patrón -- cualquier
+   error ahí se traduce a 404 sin comprobar el mensaje, un
+   comportamiento ya existente, distinto, que no se toca ni se
+   "corrige" de paso (cambiar eso sería un cambio de comportamiento
+   real, no una limpieza de duplicación).
+
+Extraídos `parsePositionId` (parametrizado por la clave del cuerpo del
+error) y `handleNotFoundOrServerError` (para los dos controladores con
+el patrón idéntico). `jscpd`: de 24,82%/12 clones a 4,35%/1 clon
+(el único que queda son las dos líneas de llamada a `parsePositionId`
+en dos funciones distintas -- fusionarlo más habría exigido mezclar la
+estructura de funciones que hacen cosas distintas después).
+
+**`positionController.test.ts`**: mismos patrones, en los tests.
+Extraídos `expectRejectedWithout400` (id inválido, nombre vacío,
+nombre demasiado largo -- las tres son "400 sin llamar al servicio",
+con cuerpo esperado explícito, no asumido) y `expectPositionNotFound`
+(las tres pruebas de 404). De paso, la prueba de "nombre demasiado
+largo" pasó de comprobar solo el status 400 a comprobar también el
+cuerpo exacto (`{ error: 'Phase name must be 100 characters or fewer'
+}`) -- una prueba más completa, no un cambio de comportamiento: el
+valor ya lo devolvía el controlador, solo no se comprobaba antes.
+`jscpd`: de 23,98%/12 clones (fichero conjunto) a 4,03%/3 clones.
+
+**Verificado con datos reales, no solo con los propios tests
+nuevos**: `npx tsc --noEmit` limpio y los 93 tests unitarios del
+backend en verde (los 12 de `positionController.test.ts` incluidos)
+tras el refactor -- cero cambio de comportamiento real, confirmado por
+los mismos tests que ya existían, no solo por los reescritos.
+
+**Hallazgo aparte, real y estructural, no una regresión de esta
+rama**: al reintentar la verificación en vivo de la sección 3.65 tras
+este refactor, el limitador general de peticiones (300/15min) se
+agotó de nuevo -- confirmado por `curl` (`429`, `RateLimit-Remaining:
+0`). Una sola ejecución completa de `hiring-pipeline` +
+`candidate-editing` + `candidate-intake` genera de por sí varios
+cientos de peticiones (cada carga de página en modo dev de Vite pide
+decenas de módulos sueltos sin empaquetar, contra el mismo límite que
+las llamadas a la API real) -- muy cerca del propio límite pensado
+para producción. La verificación en verde de la sección 3.65 (20/20,
+dos veces seguidas) es de antes de este segundo refactor y de antes de
+que el limitador volviera a agotarse; no se ha podido repetir esa
+misma comprobación después por este motivo, no porque haya indicio de
+que algo se haya roto. Queda como algo a tener en cuenta -- no a
+arreglar aquí -- si se sigue iterando con la suite completa en una
+sola sesión larga de trabajo.
+
+## 3.67 `GET /health` + comprobación automática en `global-setup.ts`: que la suite falle pronto si el backend es de otra rama
+
+Construido lo que quedó documentado como pendiente al final de la
+sección 3.65: la propia sesión demostró dos veces que un backend en
+marcha en el puerto esperado podía ser, sin ningún aviso, el de otro
+repo o rama.
+
+**`backend/src/gitInfo.ts`** (nuevo, con su propio test): `getGitInfo()`
+devuelve `{ commit, branch }` vía `git rev-parse HEAD` /
+`git rev-parse --abbrev-ref HEAD`, con el comando de ejecución
+inyectable por parámetro (mismo patrón que `networkAddresses.ts`) para
+poder testear sin depender de que la máquina que corra los tests tenga
+git de verdad disponible. Devuelve `null` en vez de lanzar si no hay
+repo accesible (un despliegue sin `.git`, por ejemplo) -- no debe
+tumbar el arranque del servidor.
+
+**`backend/src/index.ts`**: nueva ruta pública `GET /health` (sin
+`requireAuth` a propósito -- hace falta poder comprobarla antes
+incluso de intentar iniciar sesión), y una línea más en el log de
+arranque (`commit <corto> (rama <nombre>)`) -- visible también para
+quien esté haciendo pruebas manuales, no solo para la suite E2E.
+
+**`e2e/global-setup.ts`**: antes de nada (incluso antes del login),
+`verifyBackendCommit()` compara el commit que devuelve
+`GET {E2E_BACKEND_URL}/health` (por defecto `http://localhost:3010`,
+configurable) contra `git rev-parse HEAD` de este mismo repo. Si no
+coinciden, lanza un error explícito con los dos commits/ramas
+implicados, antes de que arranque ningún escenario -- exactamente el
+"hook que hace esta comprobación al lanzarlo" que pidió el usuario:
+`global-setup.ts` ya es, en la propia terminología de Playwright, el
+*hook* que se ejecuta automáticamente al lanzar la suite, así que no
+hacía falta un mecanismo aparte.
+
+**Verificado con datos reales, los dos caminos, no solo el feliz**:
+- Camino positivo: `candidate-editing.feature` completo (3/3) con el
+  backend real y la comprobación nueva de por medio -- pasa en
+  silencio, como debe.
+- Camino negativo: un servidor HTTP de mentira, aparte, sirviendo un
+  `/health` con un commit y una rama inventados (`otra-rama-AGB`),
+  apuntado con `E2E_BACKEND_URL` -- la comprobación detecta la
+  diferencia y produce exactamente el mensaje esperado:
+  > El backend en http://localhost:4321 está sirviendo el commit
+  > deadbee (rama otra-rama-AGB), no el de este repo (1688185). ¿Hay
+  > un backend de otra rama u otro repo arrancado en el mismo puerto?
+
+`npx tsc --noEmit` limpio y 95/95 tests unitarios del backend (93 +
+los 2 nuevos de `gitInfo.test.ts`).
+
+## 3.68 Contaminación real y visible: reejecutar la suite bajo el limitador agotado deja huérfanos que se ven en la propia app
+
+Consecuencia directa del hallazgo de la sección 3.66 (el limitador
+general se agota con facilidad reejecutando la suite completa varias
+veces seguidas): el usuario reportó, mirando la app de verdad, que
+varios candidatos que antes aparecían sin asignar ahora parecían
+asignados a "Senior Full-Stack Engineer", y que en "Posiciones"
+aparecían posiciones `E2E Posición Fase Vacía`/`E2E Posición Sin
+Flujo`.
+
+**Causa real, confirmada, no supuesta**: la última ejecución en
+segundo plano (lanzada para verificar el hallazgo de la sección 3.65)
+falló en 9 de 17 escenarios por el mismo limitador agotado -- entre
+ellos, los tres que crean fixtures temporales con su propia limpieza
+al final ("Fase sin candidatos", "Posición elegida sin flujo de
+entrevistas configurado", "Ningún candidato sin asignar"): al fallar
+antes de llegar a su `Then`, la limpieza nunca se ejecutó.
+
+**Investigado antes de tocar nada** (un script de solo lectura, en
+vez de asumir): confirmadas 6 posiciones `E2E Posición ...` huérfanas
+(4 con su propio candidato "Fixture ConCandidato", 2 sin él) y 10
+candidaturas "placeholder" espurias a "Senior Full-Stack Engineer" --
+5 de ellas de candidatos `E2E SinAsignar` (nombre de fixture
+inequívoco), las otras 5 sobre candidatos ("Nombre Apellido", "Bad
+Position" x3, "Good Position") cuyo origen no se puede afirmar con
+certeza solo por los datos -- confirmadas como del mismo lote por
+compartir la misma marca de tiempo exacta entre sí.
+
+**Limpieza, deliberadamente asimétrica según la certeza real**: las 6
+posiciones huérfanas y los 5 candidatos `E2E SinAsignar` se borraron
+enteros (fixtures inequívocos). De los otros 5, solo se borró la
+candidatura espuria -- los candidatos en sí se dejaron intactos, por
+si son datos propios del usuario (mismo criterio ya aplicado con
+"Nico alaslla": no se borra lo que no se puede confirmar que sea
+huérfano). El script, igual que las veces anteriores, lo bloqueó el
+clasificador de permisos del sandbox -- ejecutado por el usuario desde
+su propia terminal.
+
+**Verificado el resultado, no solo la ejecución del script** (consulta
+de solo lectura aparte, sin depender de la API bloqueada por el
+limitador): 0 posiciones `E2E ...` restantes, 0 candidatos `E2E
+SinAsignar` restantes, los 5 candidatos de origen incierto de vuelta a
+"realmente sin asignar", y "Senior Full-Stack Engineer" con
+exactamente los cuatro candidatos legítimos (John Doe, Jane Smith,
+Nico alaslla, Carlos García). De paso, un "E2E FilaClicable" más de la
+misma ejecución fallida, limpiado igual.
+
+**Decisión para el resto de la sesión**: no se vuelve a lanzar la
+suite E2E completa varias veces seguidas hoy -- cada intento bajo el
+limitador agotado no solo falla, deja más huérfanos reales detrás. La
+verificación ya hecha (sección 3.65, 20/20 dos veces; sección 3.67,
+los dos caminos del `/health` comprobados por separado) se da por
+suficiente.
